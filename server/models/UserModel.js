@@ -14,6 +14,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
+      default: null,
     },
     bio: {
       type: String,

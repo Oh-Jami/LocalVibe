@@ -82,7 +82,7 @@ const SignupScreen = ({navigation}: Props) => {
                   />
                 </View>
 
-                <View className="Password h-[60px] flex-col justify-center items-start gap-y-1.5">
+                <View className="Pasword h-[60px] flex-col justify-center items-start gap-y-1.5">
                   <Text className="Password w-[148px] h-[15px] text-black text-[13px] font-bold font-Roboto tracking-tight">
                     Password
                   </Text>

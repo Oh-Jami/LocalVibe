@@ -5,13 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // register user
 export const registerUser =
-  (
-    name: string,
-    email: string,
-    accountType: string,
-    password: string,
-    avatar: string,
-  ) =>
+  (name: string, email: string, password: string, avatar: string) =>
   async (dispatch: Dispatch<any>) => {
     try {
       dispatch({
@@ -22,7 +16,7 @@ export const registerUser =
 
       const {data} = await axios.post(
         `${URI}/registration`,
-        {name, email, accountType, password, avatar},
+        {name, email, password, avatar},
         config,
       );
       dispatch({

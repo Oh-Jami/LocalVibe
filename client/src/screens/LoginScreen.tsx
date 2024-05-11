@@ -122,7 +122,7 @@ const LoginScreen = ({navigation}: Props) => {
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('Signinfo')}>
+            <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
               <View className="Frame20 w-[341px] h-[39px] bg-white rounded-[10px] shadow justify-center items-center">
                 <Text className="SignUp text-center text-emerald-700 text-sm font-bold font-Roboto tracking-tight">
                   Sign Up

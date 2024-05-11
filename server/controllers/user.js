@@ -27,7 +27,7 @@ exports.updateUserCoor = catchAsyncErrors(async (req, res, next) => {
 // Register user
 exports.createUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { name, email, password, avatar, accountType } = req.body;
+    const { name, email, password, avatar } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
@@ -52,7 +52,6 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
       name,
       email,
       password,
-      accountType,
       userName: userNameWithoutSpace + uniqueNumber,
       avatar: avatar
         ? { public_id: myCloud.public_id, url: myCloud.secure_url }

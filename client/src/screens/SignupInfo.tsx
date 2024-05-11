@@ -31,18 +31,17 @@ const SignupScreen = ({navigation, route}: Props) => {
       Alert.alert(error);
     }
     if (isAuthenticated) {
-      navigation.navigate('Home');
       Alert.alert('Account Creation Successful!');
+      navigation.navigate('Home');
     }
   }, [error, isAuthenticated]);
 
-  const [email, setEmail] = useState('');
+  const [accountType, setAccountType] = useState('Personal');
+
   const [name, setName] = useState('');
   const [avatar, setAvatar] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordsMatch, setPasswordsMatch] = useState(true);
-  const [accountType, setAccountType] = useState('Personal');
+
+  const {email = useState(''), password = useState('')} = route.params;
 
   const uploadImage = () => {
     ImagePicker.openPicker({
@@ -66,29 +65,18 @@ const SignupScreen = ({navigation, route}: Props) => {
       });
   };
 
-  const validatePasswordMatching = () => {
-    setPasswordsMatch(password === confirmPassword);
-  };
-
-  const submitHandler = async () => {
+  const submitHandler = async (e: any) => {
     try {
-      if (!name || !email || !password || !confirmPassword || !accountType) {
-        Alert.alert('Please fill in all required fields.');
-        return;
-      }
-
-      validatePasswordMatching();
-      if (!passwordsMatch) {
-        Alert.alert('Passwords do not match.');
-        return;
-      }
-
-      await registerUser(name, email, password, avatar, accountType)(dispatch);
-
       Alert.alert('Registration Successful!');
+
+      await registerUser(name, email, password, avatar)(dispatch);
+
       navigation.navigate('Home');
     } catch (error) {
+      // Handle the error here
       console.error('An error occurred:', error);
+
+      // You can also show an error message to the user if needed
       Alert.alert('Error', 'An error occurred while processing your request.');
       navigation.navigate('Signup');
     }
@@ -141,85 +129,35 @@ const SignupScreen = ({navigation, route}: Props) => {
               </Text>
             </TouchableOpacity>
           </View>
-          <View className="flex-col justify-center items-start gap-y-1">
+          <View className="flex-col justify-center items-start gap-y-8">
             <View className="flex-row justify-between items-center gap-x-6">
               <View className="flex-col justify-center items-start gap-y-1.5">
                 <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                  Username
+                  Full name
                 </Text>
                 <TextInput
-                  placeholder="Username"
+                  placeholder="First Name"
                   value={name}
                   onChangeText={text => setName(text)}
                   className="w-[356px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
                 />
               </View>
             </View>
-            <View className="Email h-[60px] flex-col justify-center items-start gap-y-1.5">
-              <Text className="EmailOrPhoneNumber w-[148px] h-[15px] text-black text-[13px] font-bold font-Roboto tracking-tight">
-                Email or Phone Number
-              </Text>
-              <TextInput
-                placeholder="Email or Phone Number"
-                value={email}
-                onChangeText={text => setEmail(text)}
-                className="Rectangle25 w-[341px] h-[39px] bg-white rounded-[10px] shadow-2xl border border-neutral-400 border-opacity-20"
-              />
-            </View>
-
-            <View className="LoginPass flex-col justify-center items-start gap-y-1">
-              <View className="Password h-[60px] flex-col justify-center items-start gap-y-1.5">
-                <Text className="Password w-[148px] h-[15px] text-black text-[13px] font-bold font-Roboto tracking-tight">
-                  Password
-                </Text>
-                <TextInput
-                  placeholder="Password"
-                  value={password}
-                  onChangeText={text => setPassword(text)}
-                  className="Rectangle25 w-[341px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
-                  secureTextEntry={true}
-                />
-              </View>
-
-              <View className="Password h-[60px] flex-col justify-center items-start gap-y-1.5">
-                <Text className="Password w-[148px] h-[15px] text-black text-[13px] font-bold font-Roboto tracking-tight">
-                  Confirm Password
-                </Text>
-                <TextInput
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChangeText={text => setConfirmPassword(text)}
-                  className="Rectangle25 w-[341px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
-                  secureTextEntry={true}
-                />
-              </View>
-            </View>
-
             <View>
-              <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                Account Type
-              </Text>
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                <Picker
-                  prompt="Select an account type"
-                  selectedValue={accountType}
-                  onValueChange={itemValue => setAccountType(itemValue)}
-                  style={{
-                    width: 150,
-                    height: 40,
-                    backgroundColor: 'white',
-                    borderRadius: 10, // Adjust the border radius as needed
-                    borderWidth: 1, // Add a border
-                    borderColor: 'gray', // Set border color
-                  }}>
-                  <Picker.Item label="Personal" value="Personal" />
-                  <Picker.Item label="Business" value="Business" />
-                </Picker>
-              </View>
+              <Text>Account Type</Text>
+              <Picker
+                placeholder="Personal"
+                selectedValue={accountType}
+                onValueChange={(itemValue, itemIndex) =>
+                  setAccountType(itemValue)
+                }>
+                <Picker.Item label="Personal" value="Personal" />
+                <Picker.Item label="Business" value="Business" />
+              </Picker>
             </View>
           </View>
           <View>
-            <View className="TermsAgreementBox w-[353px] justify-end gap-y-1">
+            <View className="TermsAgreementBox w-[353px] justify-end gap-y-2.5">
               <Text className="TermsAgreement w-full">
                 <Text
                   style={{
@@ -269,24 +207,13 @@ const SignupScreen = ({navigation, route}: Props) => {
               </Text>
             </View>
           </View>
-
-          <View className="SignInSignup flex-col justify-center items-start gap-y-1">
-            <TouchableOpacity onPress={submitHandler}>
-              <View className="Frame19 w-[341px] h-[39px] px-[142px] bg-emerald-700 rounded-[10px] shadow justify-center items-center">
-                <Text className="SignIn text-center text-white font-bold font-Roboto tracking-tight">
-                  Sign Up
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-              <View className="Frame20 w-[341px] h-[39px] bg-white rounded-[10px] shadow justify-center items-center">
-                <Text className="SignUp text-center text-emerald-700 text-sm font-bold font-Roboto tracking-tight">
-                  Sign In
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={submitHandler}
+            className="Frame19 w-[341px] h-[39px] px-[142px] bg-emerald-700 rounded-[10px] shadow justify-center items-center">
+            <Text className="Finish w-full text-center text-white font-bold font-Roboto tracking-tight">
+              Finish
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
