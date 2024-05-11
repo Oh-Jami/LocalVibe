@@ -42,7 +42,7 @@ const SignupScreen = ({navigation, route}: Props) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordsMatch, setPasswordsMatch] = useState(true);
-  const [accountType, setAccountType] = useState('');
+  const [accountType, setAccountType] = useState('Personal');
 
   const uploadImage = () => {
     ImagePicker.openPicker({

@@ -27,7 +27,7 @@ exports.updateUserCoor = catchAsyncErrors(async (req, res, next) => {
 // Register user
 exports.createUser = catchAsyncErrors(async (req, res, next) => {
   try {
-    const { name, email, password, avatar } = req.body;
+    const { name, email, password, avatar, accountType } = req.body;
 
     let user = await User.findOne({ email });
     if (user) {
@@ -52,6 +52,7 @@ exports.createUser = catchAsyncErrors(async (req, res, next) => {
       name,
       email,
       password,
+      accountType,
       userName: userNameWithoutSpace + uniqueNumber,
       avatar: avatar
         ? { public_id: myCloud.public_id, url: myCloud.secure_url }
@@ -283,7 +284,9 @@ exports.sendFriendRequest = catchAsyncErrors(async (req, res, next) => {
       $push: { sentFriendRequests: selectedUserId },
     });
 
-    res.status(200).json({ success: true, message: "Friend request sent successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Friend request sent successfully" });
   } catch (error) {
     next(new ErrorHandler(error.message, 500));
   }
@@ -327,7 +330,9 @@ exports.acceptFriendRequest = catchAsyncErrors(async (req, res, next) => {
     await sender.save();
     await recipient.save();
 
-    res.status(200).json({ success: true, message: "Friend request accepted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Friend request accepted successfully" });
   } catch (error) {
     next(new ErrorHandler(error.message, 500));
   }
@@ -337,7 +342,10 @@ exports.acceptFriendRequest = catchAsyncErrors(async (req, res, next) => {
 exports.getAcceptedFriends = catchAsyncErrors(async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).populate("friends", "name email avatar");
+    const user = await User.findById(userId).populate(
+      "friends",
+      "name email avatar"
+    );
     const acceptedFriends = user.friends;
     res.json(acceptedFriends);
   } catch (error) {
@@ -349,7 +357,9 @@ exports.getAcceptedFriends = catchAsyncErrors(async (req, res, next) => {
 exports.getSentFriendRequests = catchAsyncErrors(async (req, res, next) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).populate("sentFriendRequests", "name email avatar").lean();
+    const user = await User.findById(userId)
+      .populate("sentFriendRequests", "name email avatar")
+      .lean();
     const sentFriendRequests = user.sentFriendRequests;
     res.json(sentFriendRequests);
   } catch (error) {
