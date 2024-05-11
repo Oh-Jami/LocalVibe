@@ -60,7 +60,7 @@ const SearchScreen = ({navigation}: Props) => {
       {isLoading ? (
         <Loader />
       ) : (
-        <SafeAreaView className='bg-[#F1FFF8] flex-1'>
+        <SafeAreaView className="bg-[#F1FFF8] flex-1">
           <View className="p-3">
             <View className="w-full flex-row items-center bg-white">
               <TouchableOpacity
@@ -92,7 +92,8 @@ const SearchScreen = ({navigation}: Props) => {
               <Loader />
             ) : (
               <FlatList
-                data={data.slice(0,5)}
+                data={data.slice(0, 10)}
+                showsVerticalScrollIndicator={false}
                 renderItem={({item}) => {
                   const handleFollowUnfollow = async (e: any) => {
                     try {
@@ -115,9 +116,11 @@ const SearchScreen = ({navigation}: Props) => {
                   };
                   return (
                     <TouchableOpacity
-                      onPress={() => navigation.navigate('UserProfile',{
-                        item: item,
-                      })}>
+                      onPress={() =>
+                        navigation.navigate('UserProfile', {
+                          item: item,
+                        })
+                      }>
                       <View className="flex-row my-3">
                         <Image
                           source={{uri: item.avatar.url}}

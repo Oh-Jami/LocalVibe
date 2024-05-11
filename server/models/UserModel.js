@@ -1,16 +1,18 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const ObjectId = require('mongodb').ObjectId;
+const ObjectId = require("mongodb").ObjectId;
 
 const userSchema = new mongoose.Schema(
-  
   {
     name: {
       type: String,
       required: [true, "Please enter your Name"],
     },
     userName: {
+      type: String,
+    },
+    accountType: {
       type: String,
     },
     bio: {
@@ -24,12 +26,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please enter your password"],
     },
-    latitude:{
-      type : Number,
+    latitude: {
+      type: Number,
       default: null,
     },
-    longitude:{
-      type : Number,
+    longitude: {
+      type: Number,
       default: null,
     },
     avatar: {
@@ -86,6 +88,5 @@ userSchema.methods.getJwtToken = function () {
 userSchema.methods.comparePassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
-
 
 module.exports = mongoose.model("User", userSchema);

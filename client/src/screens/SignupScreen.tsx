@@ -6,8 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, { useState } from 'react';
-
+import React, {useState} from 'react';
 
 type Props = {
   navigation: any;
@@ -53,10 +52,7 @@ const SignupScreen = ({navigation}: Props) => {
             </View>
             <View className="Frame14 justify-center items-center gap-2.5 flex">
               <View className="Frame13 justify-center items-center gap-2.5 flex">
-                <Image
-                  className=" w-[163.77px] h-[163.77px]"
-                  source={logo}
-                />
+                <Image className=" w-[163.77px] h-[163.77px]" source={logo} />
               </View>
             </View>
           </View>
@@ -86,7 +82,7 @@ const SignupScreen = ({navigation}: Props) => {
                   />
                 </View>
 
-                <View className="Pasword h-[60px] flex-col justify-center items-start gap-y-1.5">
+                <View className="Password h-[60px] flex-col justify-center items-start gap-y-1.5">
                   <Text className="Password w-[148px] h-[15px] text-black text-[13px] font-bold font-Roboto tracking-tight">
                     Password
                   </Text>
