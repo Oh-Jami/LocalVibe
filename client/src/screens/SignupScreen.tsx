@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
+
 
 type Props = {
   navigation: any;
@@ -52,7 +53,10 @@ const SignupScreen = ({navigation}: Props) => {
             </View>
             <View className="Frame14 justify-center items-center gap-2.5 flex">
               <View className="Frame13 justify-center items-center gap-2.5 flex">
-                <Image className=" w-[163.77px] h-[163.77px]" source={logo} />
+                <Image
+                  className=" w-[163.77px] h-[163.77px]"
+                  source={logo}
+                />
               </View>
             </View>
           </View>

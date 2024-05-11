@@ -16,7 +16,7 @@ type Props = {
 };
 
 const LoginScreen = ({navigation}: Props) => {
-  const {error, isAuthenticated} = useSelector((state: any) => state.user);
+  const {error,isAuthenticated} = useSelector((state:any) => state.user);
   const backgroundImage = require('../assets/background.png');
   const logo = require('../assets/logo.png');
 
@@ -26,26 +26,27 @@ const LoginScreen = ({navigation}: Props) => {
   const dispatch = useDispatch();
 
   const submitHandler = (e: any) => {
-    console.log('login submitted');
+    console.log("login submitted");
     loginUser(email, password)(dispatch);
   };
 
-  useEffect(() => {
-    if (error) {
-      Alert.alert('Login failed!!');
+  useEffect(() =>{
+    if(error){
+      Alert.alert("Login failed!!");
       Alert.alert(error);
     }
-    if (isAuthenticated) {
-      loadUser()(dispatch);
-      Alert.alert('Login Successful!');
+    if(isAuthenticated){ 
+      Alert.alert("Login Successful!");
       navigation.navigate('Home');
+      loadUser()(dispatch);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated])
 
   return (
     <View className="bg-teal-50 justify-center items-center flex-1">
       <StatusBar backgroundColor="#017E5E" barStyle="dark-content" />
       <Image
+      
         className="absolute top-0	 w-full h-full"
         source={backgroundImage}
       />
