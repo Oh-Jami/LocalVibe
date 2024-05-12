@@ -7,7 +7,9 @@ import {Provider, useDispatch, useSelector} from 'react-redux';
 import {getAllUsers, loadUser} from './redux/actions/userAction';
 import {StatusBar, Text} from 'react-native';
 import Loader from './src/common/Loader';
-import LocationTracking from './LocationTracking';
+import {LogBox} from 'react-native';
+
+LogBox.ignoreAllLogs();
 
 function App() {
   return (
