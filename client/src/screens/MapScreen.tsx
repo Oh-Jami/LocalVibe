@@ -46,25 +46,6 @@ const MapScreen = ({navigation}: Props) => {
     setModalVisible(!isModalVisible);
   };
 
-  const handleSubmitHandler = async () => {
-    await axios
-      .put(
-        `${URI}/update-coor`,
-        {
-          latitude: userData.latitude,
-          longitude: userData.longitude,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-      .then((res: any) => {
-        loadUser()(dispatch);
-      });
-  };
-
   const [buttonType, setButtonType] = useState('Public');
 
   const filterData = () => {
@@ -217,24 +198,22 @@ const MapScreen = ({navigation}: Props) => {
     };
   }, []);
 
-  const handleRemoveLocation = async () => {
-    await axios
-      .put(
-        `${URI}/update-coor`,
-        {
-          latitude: null,
-          longitude: null,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      )
-      .then((res: any) => {
-        loadUser()(dispatch);
-        setUserLocation(null);
-      });
+  const [markerCoords, setMarkerCoords] = useState({
+    latitude: user?.latitude,
+    longitude: user?.longitude,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleConfirm = () => {
+    // Do something with the pinned location, like saving it to a database
+    console.log('Pinned location:', markerCoords);
+  };
+
+  const [isAddingPin, setIsAddingPin] = useState(false); // state to track whether the user is adding a pin
+
+  // Function to handle the "Add Pin" button click
+  const handleAddPin = () => {
+    setIsAddingPin(true); // Set state to indicate that the user is adding a pin
   };
 
   return (
@@ -242,6 +221,7 @@ const MapScreen = ({navigation}: Props) => {
       <View style={styles.mapset} onTouchEnd={toggleModal}>
         <Image source={require('../assets/maps/users-alt.png')} />
       </View>
+
       <Text style={styles.modeLabel}>{buttonType ? `${buttonType}` : ''}</Text>
       <MapView
         provider={PROVIDER_GOOGLE}
@@ -292,63 +272,25 @@ const MapScreen = ({navigation}: Props) => {
           </Marker>
         )}
 
-        {/* Use the map function directly */}
-        {data &&
-          Array.isArray(data) &&
-          data.map((item, index) => {
-            const latitude = item.latitude;
-            const longitude = item.longitude;
-
-            if (
-              latitude != null &&
-              longitude != null &&
-              !isNaN(latitude) &&
-              !isNaN(longitude)
-            ) {
-              return (
-                <Marker
-                  key={index}
-                  coordinate={{
-                    latitude: latitude,
-                    longitude: longitude,
-                  }}
-                  title="Your Friends Location"
-                  description="Your Friends are here"
-                  image={require('../assets/maps/pin.png')}>
-                  <Callout tooltip>
-                    <View>
-                      <View style={styles.bubble}>
-                        <View className="relative">
-                          <Image
-                            source={{uri: item.avatar.url}}
-                            style={{width: 80, height: 80, borderRadius: 40}}
-                          />
-                          <Text style={styles.name}>{item?.name}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.arrowBorder} />
-                      <View style={styles.arrow} />
-                    </View>
-                  </Callout>
-                </Marker>
-              );
-            }
-
-            return null;
-          })}
+        {isAddingPin && (
+          <Marker
+            draggable
+            coordinate={markerCoords}
+            onDragStart={() => setIsDragging(true)}
+            onDragEnd={e => {
+              setIsDragging(false);
+              setMarkerCoords(e.nativeEvent.coordinate);
+            }}
+          />
+        )}
       </MapView>
-      <View style={styles.buttonContainer}>
-        <Button
-          color="#017E5E"
-          title="Upload Location"
-          onPress={handleSubmitHandler}
-        />
-        <Button
-          color="#017E5E"
-          title="Remove Location"
-          onPress={handleRemoveLocation}
-        />
-      </View>
+      {isDragging && <Text>Drag the pin to adjust location</Text>}
+      <Button
+        title="Confirm"
+        onPress={handleConfirm}
+        disabled={!markerCoords}
+      />
+      <Button title="Add Pin" onPress={handleAddPin} />
       {/* Modal */}
       <Modal isVisible={isModalVisible} style={styles.modalContainer}>
         <View style={styles.buttonContainers}>

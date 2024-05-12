@@ -19,8 +19,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import {getAllPosts} from '../../redux/actions/postAction';
 import PostCard from '../components/PostCard';
 import Loader from '../common/Loader';
-import {getAllUsers} from '../../redux/actions/userAction';
+import {getAllUsers, loadUser} from '../../redux/actions/userAction';
+import Geolocation from '@react-native-community/geolocation';
+import {GeoPosition} from 'react-native-geolocation-service';
 import Lottie from 'lottie-react-native';
+import axios from 'axios';
+import {URI} from '../../redux/URI';
 
 const loader = require('../assets/newsfeed/animation_lkbqh8co.json');
 
@@ -29,7 +33,7 @@ type Props = {
 };
 
 const HomeScreen = ({navigation}: Props) => {
-  const {user} = useSelector((state: any) => state.user);
+  const {users, user, token} = useSelector((state: any) => state.user);
   const {posts, isLoading} = useSelector((state: any) => state.post);
   const dispatch = useDispatch();
   const [offsetY, setOffsetY] = useState(0);
@@ -41,6 +45,13 @@ const HomeScreen = ({navigation}: Props) => {
 
   const [showModal, setShowModal] = useState(false);
   const [newProximityThreshold, setNewProximityThreshold] = useState(5);
+
+  const [userLocation, setUserLocation] = useState<GeoPosition | null>(null);
+  const [watchID, setWatchID] = useState<number | null>(null);
+  const [userData, setUserData] = useState({
+    latitude: user?.latitude,
+    longitude: user?.longitude,
+  });
 
   const openModal = () => {
     setShowModal(true);
@@ -84,16 +95,6 @@ const HomeScreen = ({navigation}: Props) => {
     setOffsetY(y);
   }
 
-  function onRelease() {
-    if (offsetY <= -refreshingHeight && !refreshing) {
-      setRefreshing(true);
-      setTimeout(() => {
-        getAllPosts()(dispatch);
-        setRefreshing(false);
-      }, 3000);
-    }
-  }
-
   function onScrollEndDrag(event: any) {
     const {nativeEvent} = event;
     const {contentOffset} = nativeEvent;
@@ -108,6 +109,57 @@ const HomeScreen = ({navigation}: Props) => {
       }, 3000);
     }
   }
+
+  useEffect(() => {
+    if (Geolocation) {
+      const success = (geoPosition: {
+        coords: {
+          latitude: any;
+          longitude: any;
+          accuracy: any;
+          altitude: any;
+          altitudeAccuracy: any;
+          heading: any;
+          speed: any;
+        };
+      }) => {
+        setUserLocation({
+          latitude: geoPosition.coords.latitude,
+          longitude: geoPosition.coords.longitude,
+          accuracy: geoPosition.coords.accuracy,
+          altitude: geoPosition.coords.altitude,
+          altitudeAccuracy: geoPosition.coords.altitudeAccuracy,
+          heading: geoPosition.coords.heading,
+          speed: geoPosition.coords.speed,
+        } as unknown as GeoPosition);
+
+        setUserData({
+          latitude: geoPosition.coords.latitude,
+          longitude: geoPosition.coords.longitude,
+        });
+      };
+
+      const error = (error: {code: any; message: any}) => {
+        console.log(error.code, error.message);
+      };
+
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 10000,
+      };
+
+      setWatchID(Geolocation.watchPosition(success, error, options));
+    } else {
+      console.error('Geolocation is not available.');
+    }
+
+    return () => {
+      if (watchID) {
+        Geolocation.clearWatch(watchID);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     getAllPosts()(dispatch);
@@ -170,9 +222,29 @@ const HomeScreen = ({navigation}: Props) => {
     try {
       await getAllPosts()(dispatch);
       await getAllUsers()(dispatch);
+      await submitLocation();
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const submitLocation = async () => {
+    await axios
+      .put(
+        `${URI}/update-coor`,
+        {
+          latitude: userData.latitude,
+          longitude: userData.longitude,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      )
+      .then((res: any) => {
+        loadUser()(dispatch);
+      });
   };
 
   return (
@@ -288,3 +360,6 @@ const HomeScreen = ({navigation}: Props) => {
 };
 
 export default HomeScreen;
+function setWatchID(arg0: any) {
+  throw new Error('Function not implemented.');
+}

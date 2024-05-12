@@ -3,7 +3,6 @@ import {URI} from '../URI';
 import {Dispatch} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
 // register user
 export const registerUser =
   (name: string, email: string, password: string, avatar: string) =>
@@ -14,7 +13,6 @@ export const registerUser =
       });
 
       const config = {headers: {'Content-Type': 'application/json'}};
-
       const {data} = await axios.post(
         `${URI}/registration`,
         {name, email, password, avatar},
@@ -214,20 +212,19 @@ export const unfollowUserAction =
     }
   };
 
-
-  export const sendFriendRequestAction =
+export const sendFriendRequestAction =
   (currentUserId: string, selectedUserId: string) =>
   async (dispatch: Dispatch<any>) => {
     try {
       const token = await AsyncStorage.getItem('token');
       await axios.post(
         `${URI}/friend-request`,
-        { currentUserId, selectedUserId },
+        {currentUserId, selectedUserId},
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       dispatch({
         type: 'sendFriendRequestSuccess',
@@ -239,58 +236,60 @@ export const unfollowUserAction =
   };
 
 export const acceptFriendRequestAction =
-(senderId: string,  recipientId: string) =>
-async (dispatch: Dispatch<any>) => {
-  try {
-    const token = await AsyncStorage.getItem('token');
-    await axios.post(
-      `${URI}/friend-request/accept`,
-      { senderId, recipientId },
-      {
+  (senderId: string, recipientId: string) =>
+  async (dispatch: Dispatch<any>) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      await axios.post(
+        `${URI}/friend-request/accept`,
+        {senderId, recipientId},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+      dispatch({
+        type: 'acceptFriendRequestSuccess',
+        payload: recipientId,
+      });
+    } catch (error) {
+      console.log('Error accepting friend request:', error);
+    }
+  };
+
+export const loadFriendRequestsAction =
+  (userId: string) => async (dispatch: Dispatch<any>) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const {data} = await axios.get(`${URI}/friend-request/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
-    dispatch({
-      type: 'acceptFriendRequestSuccess',
-      payload: recipientId,
-    });
-  } catch (error) {
-    console.log('Error accepting friend request:', error);
-  }
-};
+      });
+      dispatch({
+        type: 'loadFriendRequestsSuccess',
+        payload: data,
+      });
+    } catch (error) {
+      console.log('Error loading friend requests:', error);
+    }
+  };
 
-export const loadFriendRequestsAction = (userId: string) => async (dispatch: Dispatch<any>) => {
-try {
-  const token = await AsyncStorage.getItem('token');
-  const { data } = await axios.get(`${URI}/friend-request/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  dispatch({
-    type: 'loadFriendRequestsSuccess',
-    payload: data,
-  });
-} catch (error) {
-  console.log('Error loading friend requests:', error);
-}
-};
-
-export const loadAcceptedFriendsAction = (userId: string) => async (dispatch: Dispatch<any>) => {
-try {
-  const token = await AsyncStorage.getItem('token');
-  const { data } = await axios.get(`${URI}/accepted-friends/${userId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-  dispatch({
-    type: 'loadAcceptedFriendsSuccess',
-    payload: data,
-  });
-} catch (error) {
-  console.log('Error loading accepted friends:', error);
-}
-};
+export const loadAcceptedFriendsAction =
+  (userId: string) => async (dispatch: Dispatch<any>) => {
+    try {
+      const token = await AsyncStorage.getItem('token');
+      const {data} = await axios.get(`${URI}/accepted-friends/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      dispatch({
+        type: 'loadAcceptedFriendsSuccess',
+        payload: data,
+      });
+    } catch (error) {
+      console.log('Error loading accepted friends:', error);
+    }
+  };

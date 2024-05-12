@@ -21,7 +21,7 @@ if (process.env.NODE_ENV !== "PRODUCTION") {
 // Define a route for updating user location
 // app.post("/api/v1/update-location", locationController.updateLocation);
 
-app.post('/api/updateUserLocation', async (req, res) => {
+app.post("/api/updateUserLocation", async (req, res) => {
   try {
     const { userId, location } = req.body;
 
@@ -33,17 +33,19 @@ app.post('/api/updateUserLocation', async (req, res) => {
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Error updating user location:', error);
-    res.status(500).json({ success: false, error: 'Internal Server Error' });
+    console.error("Error updating user location:", error);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 });
 
 // Route imports
 const user = require("./routes/user");
 const post = require("./routes/Post");
+const pin = require("./routes/pin");
 
 app.use("/api/v1", user);
 app.use("/api/v1", post);
+app.use("/api/v1", pin);
 
 // it's for errorHandeling
 app.use(ErrorHandler);

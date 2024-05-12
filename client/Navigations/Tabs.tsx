@@ -43,7 +43,7 @@ const Tabs = (props: Props) => {
           ),
         })}
       />
-      <Tab.Screen
+      {/* <Tab.Screen
         name="Message"
         component={ChatScreen}
         options={({route}) => ({
@@ -59,7 +59,7 @@ const Tabs = (props: Props) => {
             </View>
           ),
         })}
-      />
+      /> */}
       <Tab.Screen
         name="Map"
         component={MapScreen}
@@ -111,7 +111,6 @@ const Tabs = (props: Props) => {
           ),
         })}
       />
-
     </Tab.Navigator>
   );
 };
