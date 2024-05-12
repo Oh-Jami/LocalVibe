@@ -11,6 +11,12 @@ import {
   Alert,
   Modal,
   TouchableWithoutFeedback,
+  Platform,
+  ScrollView,
+  Animated,
+  Dimensions,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
 } from 'react-native';
 import MapView, {Callout, Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -22,13 +28,19 @@ import {getAllUsers, loadUser} from '../../redux/actions/userAction';
 import {Modal as RNModal} from 'react-native';
 import {getAllPins, createPinAction} from '../../redux/actions/pinAction';
 import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
+import StarRating from '../components/StarRating';
+
+const {width, height} = Dimensions.get('window');
+const CARD_HEIGHT = 240;
+const CARD_WIDTH = width * 0.8;
+const SPACING_FOR_CARD_INSET = width * 0.1 - 10;
 
 type Props = {
   navigation: any;
 };
 
 const MapScreen = ({navigation}: Props) => {
-  // const {pins, isLoading} = useSelector((state: any) => state.pins);
+  let mapAnimation = new Animated.Value(0);
   const [data, setData] = useState([
     {
       name: '',
@@ -69,12 +81,25 @@ const MapScreen = ({navigation}: Props) => {
     setIsAddingPin(true);
   };
 
+  const handleVisitButtonPress = (pins: any) => {
+    navigation.navigate('BusinessPinScreen', {pins});
+  };
+
+  const _map = React.useRef(null);
+  const _scrollView = React.useRef(null);
+
   const [openModal, setOpenModal] = useState(false);
 
   const handleConfirm = () => {
     console.log('Pinned location:', markerCoords);
     setIsAddingPin(false);
     setIsAddingForm(true);
+  };
+
+  const isCurrentUserPin = (pinCreatedBy: string, currentUserId: string) => {
+    // console.log(pinCreatedBy);
+    // console.log(currentUserId);
+    return pinCreatedBy === currentUserId;
   };
 
   const deletePinHandler = async (e: any) => {
@@ -88,6 +113,54 @@ const MapScreen = ({navigation}: Props) => {
         getAllPins()(dispatch);
       });
   };
+
+  const initialMapState = {
+    categories: [
+      {
+        name: 'Milktea Shop',
+        icon: (
+          <View style={styles.chipsIcon}>
+            <Image source={require('../assets/maps/milktea.png')} />
+          </View>
+        ),
+      },
+      {
+        name: 'Convenience Store',
+        icon: (
+          <View style={styles.chipsIcon}>
+            <Image source={require('../assets/maps/store.png')} />
+          </View>
+        ),
+      },
+      {
+        name: 'Streetfoods',
+        icon: (
+          <View style={styles.chipsIcon}>
+            <Image source={require('../assets/maps/streetfood.png')} />
+          </View>
+        ),
+      },
+      {
+        name: 'Bar',
+        icon: (
+          <View style={styles.chipsIcon}>
+            <Image source={require('../assets/maps/bar.png')} />
+          </View>
+        ),
+      },
+      {
+        name: 'Hotels',
+        icon: (
+          <View style={styles.chipsIcon}>
+            <Image source={require('../assets/maps/hotel.png')} />
+          </View>
+        ),
+      },
+    ],
+  };
+
+  let mapIndex = 0;
+  const [state, setState] = React.useState(initialMapState);
 
   const handleSubmit = () => {
     if (
@@ -205,7 +278,7 @@ const MapScreen = ({navigation}: Props) => {
       elementType: 'geometry.fill',
       stylers: [
         {
-          color: '#ffffff',
+          color: '#FEFAF6',
         },
       ],
     },
@@ -214,7 +287,7 @@ const MapScreen = ({navigation}: Props) => {
       elementType: 'geometry.fill',
       stylers: [
         {
-          color: '#ffffff',
+          color: '#FEFAF6',
         },
       ],
     },
@@ -339,6 +412,34 @@ const MapScreen = ({navigation}: Props) => {
       ],
     },
   ];
+
+  const [currentPinIndex, setCurrentPinIndex] = useState(0);
+
+  const calculateCurrentPinIndex = (offsetX: number) => {
+    const index = Math.floor(offsetX / (CARD_WIDTH + 20));
+    setCurrentPinIndex(index);
+  };
+
+  useEffect(() => {
+    const pin = pins[currentPinIndex];
+    if (pin && _map.current) {
+      const {latitude, longitude} = pin;
+      (_map.current as MapView).animateToRegion(
+        {
+          latitude,
+          longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        350,
+      );
+    }
+  }, [currentPinIndex, pins]);
+
+  const handleOpenModal = () => {
+    console.log('Button clicked');
+    setOpenModal(true);
+  };
 
   useEffect(() => {
     getAllUsers()(dispatch);
@@ -469,47 +570,7 @@ const MapScreen = ({navigation}: Props) => {
               }}
               title={pins.businessName}
               description={pins.description}
-              image={require('../assets/maps/pin.png')}>
-              <Callout tooltip>
-                <View>
-                  <View style={styles.calloutContainer}>
-                    <View style={styles.titleHeader}>
-                      <View style={styles.textContainer}>
-                        <Text style={styles.title}>{pins.businessName}</Text>
-                        <Text>{pins.description}</Text>
-                      </View>
-                      <Text>
-                        <Image
-                          source={{
-                            uri: 'https://cdn-icons-png.flaticon.com/512/2589/2589197.png',
-                          }}
-                          width={30}
-                          height={30}
-                          resizeMode="cover"
-                        />
-                      </Text>
-                    </View>
-
-                    <View style={styles.imagePin}>
-                      <Text>
-                        {pins.image && (
-                          <Image
-                            style={styles.image}
-                            source={{uri: pins.image.url}}
-                          />
-                        )}
-                      </Text>
-
-                      <Button
-                        onPress={() => setOpenModal(true)}
-                        title="menu"
-                        color="#000"
-                      />
-                    </View>
-                  </View>
-                </View>
-              </Callout>
-            </Marker>
+              image={require('../assets/maps/pin.png')}></Marker>
           ))}
 
         {isAddingPin && (
@@ -520,6 +581,149 @@ const MapScreen = ({navigation}: Props) => {
           />
         )}
       </MapView>
+
+      <View style={styles.searchBox}>
+        <TextInput
+          placeholder="Search here"
+          placeholderTextColor="#000"
+          autoCapitalize="none"
+          style={{flex: 1, padding: 0}}
+        />
+        <Image source={require('../assets/newsfeed/search.png')} />
+      </View>
+
+      <ScrollView
+        horizontal
+        scrollEventThrottle={1}
+        showsHorizontalScrollIndicator={false}
+        height={50}
+        style={styles.chipsScrollView}
+        contentInset={{
+          // iOS only
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 20,
+        }}
+        contentContainerStyle={{
+          paddingRight: Platform.OS === 'android' ? 20 : 0,
+        }}>
+        {state.categories.map((category, index) => (
+          <TouchableOpacity key={index} style={styles.chipsItem}>
+            {category.icon}
+            <Text>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <Animated.ScrollView
+        ref={_scrollView}
+        horizontal
+        pagingEnabled
+        scrollEventThrottle={1}
+        showsHorizontalScrollIndicator={false}
+        snapToInterval={CARD_WIDTH + 20}
+        snapToAlignment="center"
+        style={styles.scrollView}
+        contentInset={{
+          top: 0,
+          left: SPACING_FOR_CARD_INSET,
+          bottom: 0,
+          right: SPACING_FOR_CARD_INSET,
+        }}
+        contentContainerStyle={{
+          paddingHorizontal:
+            Platform.OS === 'android' ? SPACING_FOR_CARD_INSET : 0,
+        }}
+        onScroll={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          if (
+            event.nativeEvent.contentOffset &&
+            typeof event.nativeEvent.contentOffset.x === 'number'
+          ) {
+            calculateCurrentPinIndex(event.nativeEvent.contentOffset.x);
+            const pin = pins[currentPinIndex];
+            if (pin && _map.current) {
+              const {latitude, longitude} = pin;
+              (_map.current as MapView).animateToRegion(
+                {
+                  latitude,
+                  longitude,
+                  latitudeDelta: 0.005,
+                  longitudeDelta: 0.005,
+                },
+                350,
+              );
+            }
+          }
+        }}>
+        {pins &&
+          pins.map((pins: any) => (
+            <View style={styles.card}>
+              <Image
+                source={{uri: pins.image.url}}
+                style={styles.cardImage}
+                resizeMode="cover"
+              />
+              <View style={styles.textContent}>
+                <Text numberOfLines={1} style={styles.cardtitle}>
+                  {pins.businessName}
+                </Text>
+                <StarRating ratings={4} reviews={99} />
+                <Text numberOfLines={1} style={styles.cardDescription}>
+                  {pins.description}
+                </Text>
+
+                <View style={styles.cardButtons}>
+                  <View style={styles.button}>
+                    <TouchableOpacity
+                      onPress={() => handleVisitButtonPress(pins)}
+                      style={[
+                        styles.signIn,
+                        {
+                          borderColor: '#0A6847',
+                          borderWidth: 1,
+                        },
+                      ]}>
+                      <Text
+                        style={[
+                          styles.textSign,
+                          {
+                            color: '#0A6847',
+                          },
+                        ]}>
+                        Visit
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View style={styles.button}>
+                    {isCurrentUserPin(pins.CreatedBy, user._Id) && (
+                      <TouchableOpacity
+                        onPress={() => setOpenModal(true)}
+                        style={[
+                          styles.signIn,
+                          {
+                            borderColor: '#e24848',
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.textSign,
+                            {
+                              color: '#e24848',
+                            },
+                          ]}>
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </View>
+            </View>
+          ))}
+      </Animated.ScrollView>
 
       {openModal && (
         <View className="flex-[1] justify-center items-center mt-[22]">
@@ -639,51 +843,99 @@ const MapScreen = ({navigation}: Props) => {
 };
 
 const styles = StyleSheet.create({
-  calloutContainer: {
-    width: 350,
-    height: 250,
-    flexDirection: 'column',
-    backgroundColor: '#E0FBE2',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    shadowColor: '#000',
-    paddingTop: 5,
-    paddingLeft: 20,
-    paddingRight: 20,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+  searchBox: {
+    position: 'absolute',
+    marginTop: Platform.OS === 'ios' ? 40 : 20,
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    width: '90%',
     alignSelf: 'center',
-    justifyContent: 'center',
+    borderRadius: 5,
+    padding: 10,
+    shadowColor: '#ccc',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 10,
   },
-  titleHeader: {
+  cardButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  imagePin: {
-    width: 70,
-    height: 100,
+  chipsIcon: {
+    marginRight: 5,
   },
-  image: {
-    width: 70,
-    height: 70,
+  chipsScrollView: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 90 : 80,
+    paddingHorizontal: 10,
   },
-  textContainer: {
-    flex: 1,
-    flexDirection: 'column',
-    height: 20,
+  chipsItem: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 8,
+    paddingHorizontal: 20,
+    marginHorizontal: 10,
+    height: 35,
+    shadowColor: '#ccc',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 10,
   },
-  title: {
-    fontSize: 16,
+  scrollView: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingVertical: 10,
+  },
+  card: {
+    // padding: 10,
+    elevation: 2,
+    backgroundColor: '#FFF',
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+    marginHorizontal: 10,
+    shadowColor: '#000',
+    shadowRadius: 5,
+    shadowOpacity: 0.3,
+    shadowOffset: {x: 2, y: -2},
+    height: CARD_HEIGHT,
+    width: CARD_WIDTH,
+    overflow: 'hidden',
+  },
+  cardImage: {
+    flex: 3,
+    width: '100%',
+    height: '100%',
+    alignSelf: 'center',
+  },
+  textContent: {
+    flex: 2,
+    padding: 10,
+  },
+  cardtitle: {
+    fontSize: 14,
+    // marginTop: 5,
     fontWeight: 'bold',
-    marginBottom: 1,
   },
-  description: {},
+  cardDescription: {
+    fontSize: 12,
+    color: '#444',
+  },
+  signIn: {
+    width: '100%',
+    padding: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 3,
+  },
+  textSign: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
   container: {
     flex: 1,
   },
@@ -692,7 +944,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     zIndex: 1,
     alignSelf: 'center',
-    bottom: 20,
+    bottom: 10,
   },
   button: {
     marginBottom: 10,

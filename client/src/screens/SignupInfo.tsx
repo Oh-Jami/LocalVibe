@@ -125,36 +125,17 @@ const SignupScreen = ({navigation, route}: Props) => {
             <View className="flex-row justify-between items-center gap-x-6">
               <View className="flex-col justify-center items-start gap-y-1.5">
                 <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                  Full name
+                  Username
                 </Text>
                 <TextInput
-                  placeholder="First Name"
+                  placeholder="Username"
                   value={name}
                   onChangeText={text => setName(text)}
                   className="w-[356px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
                 />
               </View>
             </View>
-            <View className="flex-col justify-start items-start">
-              <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                Address
-              </Text>
-              <TextInput
-                placeholder="Address"
-                className="w-[356px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
-              />
-            </View>
             <View className="flex-row justify-between items-center gap-x-6">
-              <View className="flex-col justify-center items-start gap-y-1.5">
-                <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                  Gender
-                </Text>
-                <TextInput
-                  placeholder="Gender"
-                  className="w-[166px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
-                />
-              </View>
-
               <View className="flex-col justify-center items-start gap-y-1.5">
                 <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
                   Account Type

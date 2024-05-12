@@ -12,6 +12,7 @@ import PostDetailsScreen from '../src/screens/PostDetailsScreen';
 import PostLikeCard from '../src/components/PostLikeCard';
 import FollowerCard from '../src/components/FollowerCard';
 import EditProfile from '../src/components/EditProfile';
+import BusinessPinScreen from '../src/screens/BusinessPinScreen';
 
 type Props = {};
 
@@ -52,6 +53,7 @@ const Main = (props: Props) => {
         <Stack.Screen name="UserProfile" component={UserProfileScreen} />
         <Stack.Screen name="CreateReplies" component={CreateRepliesScreen} />
         <Stack.Screen name="PostDetails" component={PostDetailsScreen} />
+        <Stack.Screen name="BusinessPin" component={BusinessPinScreen} />
         <Stack.Screen name="PostLikeCard" component={PostLikeCard} />
         <Stack.Screen name="FollowerCard" component={FollowerCard} />
         <Stack.Screen name="EditProfile" component={EditProfile} />
@@ -71,6 +73,7 @@ const Main = (props: Props) => {
         <Stack.Screen name="UserProfile" component={UserProfileScreen} />
         <Stack.Screen name="CreateReplies" component={CreateRepliesScreen} />
         <Stack.Screen name="PostDetails" component={PostDetailsScreen} />
+        <Stack.Screen name="BusinessPinScreen" component={BusinessPinScreen} />
         <Stack.Screen name="PostLikeCard" component={PostLikeCard} />
         <Stack.Screen name="FollowerCard" component={FollowerCard} />
         <Stack.Screen name="EditProfile" component={EditProfile} />

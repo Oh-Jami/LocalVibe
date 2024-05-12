@@ -221,8 +221,8 @@ const HomeScreen = ({navigation}: Props) => {
     setRefreshing(true);
     try {
       await submitLocation();
-      await getAllPosts()(dispatch);
       await getAllUsers()(dispatch);
+      await getAllPosts()(dispatch);
     } finally {
       setRefreshing(false);
     }
