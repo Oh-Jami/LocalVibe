@@ -7,6 +7,10 @@ import {
   Text,
   Image,
   FlatList,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import MapView, {Callout, Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
@@ -15,13 +19,16 @@ import axios from 'axios';
 import {URI} from '../../redux/URI';
 import {useDispatch, useSelector} from 'react-redux';
 import {getAllUsers, loadUser} from '../../redux/actions/userAction';
-import Modal from 'react-native-modal';
+import {Modal as RNModal} from 'react-native';
+import {getAllPins, createPinAction} from '../../redux/actions/pinAction';
+import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
 
 type Props = {
   navigation: any;
 };
 
 const MapScreen = ({navigation}: Props) => {
+  // const {pins, isLoading} = useSelector((state: any) => state.pins);
   const [data, setData] = useState([
     {
       name: '',
@@ -39,79 +46,107 @@ const MapScreen = ({navigation}: Props) => {
     latitude: user?.latitude,
     longitude: user?.longitude,
   });
+  const [isAddingPin, setIsAddingPin] = useState(false);
+  const [isAddingForm, setIsAddingForm] = useState(false);
+  const [markerCoords, setMarkerCoords] = useState({
+    latitude: user?.latitude,
+    longitude: user?.longitude,
+  });
 
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [businessName, setBusinessName] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [contactInfo, setContactInfo] = useState({
+    phone: '',
+    email: '',
+    website: '',
+  });
+  const [image, setImage] = useState('');
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
+  const [newProximityThreshold, setNewProximityThreshold] = useState(5);
+
+  const handleAddPin = () => {
+    setIsAddingPin(true);
   };
 
-  const [buttonType, setButtonType] = useState('Public');
+  const [openModal, setOpenModal] = useState(false);
 
-  const filterData = () => {
-    const distanceThreshold = 5; // Adjust the distance threshold as needed
+  const handleConfirm = () => {
+    console.log('Pinned location:', markerCoords);
+    setIsAddingPin(false);
+    setIsAddingForm(true);
+  };
 
-    if (buttonType === 'Friends') {
-      // Filter data to only show friends
-      const friendData = users.filter((item: any) => {
-        // Assuming you have the user's ID in the "following" array
-        const isFriend = user?.following.some(
-          (friend: any) => friend.userId === item._id,
-        );
-        return isFriend;
-      });
-
-      // Use haversine to filter only within the distance threshold
-      const filteredData = friendData.filter((item: any) => {
-        if (item.latitude && item.longitude) {
-          const distance = haversine(
-            user?.latitude,
-            user?.longitude,
-            item.latitude,
-            item.longitude,
-          );
-          return distance <= distanceThreshold;
-        }
-        return false;
-      });
-
-      setData(filteredData);
-    } else if (buttonType === 'Public') {
-      // Show all data within the distance threshold for public
-      const filteredData = users.filter(
-        (item: {latitude: number; longitude: number}) => {
-          if (item.latitude && item.longitude) {
-            const distance = haversine(
-              user?.latitude,
-              user?.longitude,
-              item.latitude,
-              item.longitude,
-            );
-            return distance <= distanceThreshold;
-          }
-          return false;
+  const deletePinHandler = async (e: any) => {
+    await axios
+      .delete(`${URI}/delete-pin/${e}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
-
-      setData(filteredData);
-    } else {
-      // Show all data for other button types
-      const filteredData = users.filter((item: any) => {
-        if (item.latitude && item.longitude) {
-          const distance = haversine(
-            user?.latitude,
-            user?.longitude,
-            item.latitude,
-            item.longitude,
-          );
-          return distance <= distanceThreshold;
-        }
-        return false;
+      })
+      .then(res => {
+        getAllPins()(dispatch);
       });
-
-      setData(filteredData);
-    }
   };
+
+  const handleSubmit = () => {
+    if (
+      businessName !== '' ||
+      description !== '' ||
+      category !== '' ||
+      contactInfo.phone !== '' ||
+      contactInfo.email !== '' ||
+      contactInfo.website !== ''
+    ) {
+      console.log(businessName);
+      createPinAction(
+        user,
+        businessName,
+        description,
+        category,
+        markerCoords.latitude,
+        markerCoords.longitude,
+        contactInfo,
+        image,
+      )(dispatch);
+    }
+    setIsAddingForm(false);
+  };
+
+  const uploadImage = () => {
+    ImagePicker.openPicker({
+      width: 300,
+      height: 300,
+      cropping: true,
+      compressImageQuality: 0.8,
+      includeBase64: true,
+    })
+      .then((image: ImageOrVideo | null) => {
+        if (image) {
+          setImage('data:image/jpeg;base64,' + image.data);
+        } else {
+          // Handle the case where image is null or undefined
+          Alert.alert('No image selected');
+        }
+      })
+      .catch(error => {
+        // Handle any errors that occur during image picking
+        console.error('Image picking error:', error);
+      });
+  };
+
+  const {pins} = useSelector((state: any) => state.pin);
+  const nearbypin = pins.filter(
+    (pins: {latitude: number; longitude: number}) => {
+      const distance = haversine(
+        user.latitude,
+        user.longitude,
+        pins.latitude,
+        pins.longitude,
+      );
+      return distance <= newProximityThreshold;
+    },
+  );
 
   function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6371;
@@ -128,17 +163,186 @@ const MapScreen = ({navigation}: Props) => {
     return distance;
   }
 
-  const handleButtonClick = (type: string) => {
-    setButtonType(type);
-    toggleModal();
-  };
-
-  useEffect(() => {
-    filterData();
-  }, [buttonType, users, user]);
+  const customMapStyle = [
+    {
+      featureType: 'all',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          weight: '2.00',
+        },
+      ],
+    },
+    {
+      featureType: 'all',
+      elementType: 'geometry.stroke',
+      stylers: [
+        {
+          color: '#9c9c9c',
+        },
+      ],
+    },
+    {
+      featureType: 'all',
+      elementType: 'labels.text',
+      stylers: [
+        {
+          visibility: 'on',
+        },
+      ],
+    },
+    {
+      featureType: 'landscape',
+      elementType: 'all',
+      stylers: [
+        {
+          color: '#f2f2f2',
+        },
+      ],
+    },
+    {
+      featureType: 'landscape',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          color: '#ffffff',
+        },
+      ],
+    },
+    {
+      featureType: 'landscape.man_made',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          color: '#ffffff',
+        },
+      ],
+    },
+    {
+      featureType: 'poi',
+      elementType: 'all',
+      stylers: [
+        {
+          visibility: 'off',
+        },
+      ],
+    },
+    {
+      featureType: 'road',
+      elementType: 'all',
+      stylers: [
+        {
+          saturation: -100,
+        },
+        {
+          lightness: 45,
+        },
+      ],
+    },
+    {
+      featureType: 'road',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          color: '#E0FBE2',
+        },
+      ],
+    },
+    {
+      featureType: 'road',
+      elementType: 'labels.text.fill',
+      stylers: [
+        {
+          color: '#7b7b7b',
+        },
+      ],
+    },
+    {
+      featureType: 'road',
+      elementType: 'labels.text.stroke',
+      stylers: [
+        {
+          color: '#ffffff',
+        },
+      ],
+    },
+    {
+      featureType: 'road.highway',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          visibility: 'on',
+        },
+        {
+          color: '#00FF00',
+        },
+      ],
+    },
+    {
+      featureType: 'road.arterial',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          visibility: 'on',
+        },
+        {
+          color: '#5fff54',
+        },
+      ],
+    },
+    {
+      featureType: 'transit',
+      elementType: 'all',
+      stylers: [
+        {
+          visibility: 'off',
+        },
+      ],
+    },
+    {
+      featureType: 'water',
+      elementType: 'all',
+      stylers: [
+        {
+          color: '#46bcec',
+        },
+        {
+          visibility: 'on',
+        },
+      ],
+    },
+    {
+      featureType: 'water',
+      elementType: 'geometry.fill',
+      stylers: [
+        {
+          color: '#C5EAD0',
+        },
+      ],
+    },
+    {
+      featureType: 'water',
+      elementType: 'labels.text.fill',
+      stylers: [
+        {
+          color: '#070707',
+        },
+      ],
+    },
+    {
+      featureType: 'water',
+      elementType: 'labels.text.stroke',
+      stylers: [
+        {
+          color: '#ffffff',
+        },
+      ],
+    },
+  ];
 
   useEffect(() => {
     getAllUsers()(dispatch);
+    getAllPins()(dispatch);
   }, [dispatch]);
 
   useEffect(() => {
@@ -198,41 +402,24 @@ const MapScreen = ({navigation}: Props) => {
     };
   }, []);
 
-  const [markerCoords, setMarkerCoords] = useState({
-    latitude: user?.latitude,
-    longitude: user?.longitude,
-  });
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleConfirm = () => {
-    // Do something with the pinned location, like saving it to a database
-    console.log('Pinned location:', markerCoords);
-  };
-
-  const [isAddingPin, setIsAddingPin] = useState(false); // state to track whether the user is adding a pin
-
-  // Function to handle the "Add Pin" button click
-  const handleAddPin = () => {
-    setIsAddingPin(true); // Set state to indicate that the user is adding a pin
-  };
-
   return (
     <View style={styles.container}>
-      <View style={styles.mapset} onTouchEnd={toggleModal}>
-        <Image source={require('../assets/maps/users-alt.png')} />
-      </View>
-
-      <Text style={styles.modeLabel}>{buttonType ? `${buttonType}` : ''}</Text>
       <MapView
         provider={PROVIDER_GOOGLE}
         style={{flex: 1}}
+        customMapStyle={customMapStyle}
         showsUserLocation
         showsMyLocationButton
         region={{
-          latitude: userLocation ? userLocation.latitude : 14.8327,
-          longitude: userLocation ? userLocation.longitude : 120.2822,
-          latitudeDelta: 0.09,
-          longitudeDelta: 0.09,
+          latitude: user?.latitude,
+          longitude: user?.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        }}
+        onPress={e => {
+          if (isAddingPin) {
+            setMarkerCoords(e.nativeEvent.coordinate);
+          }
         }}>
         {userLocation && (
           <Marker
@@ -272,89 +459,198 @@ const MapScreen = ({navigation}: Props) => {
           </Marker>
         )}
 
+        {pins &&
+          pins.map((pins: any) => (
+            <Marker
+              key={pins._id}
+              coordinate={{
+                latitude: pins.latitude,
+                longitude: pins.longitude,
+              }}
+              title={pins.businessName}
+              description={pins.description}
+              image={require('../assets/maps/pin.png')}>
+              <Callout tooltip>
+                <View>
+                  <View style={styles.calloutContainer}>
+                    <View style={styles.titleHeader}>
+                      <View style={styles.textContainer}>
+                        <Text style={styles.title}>{pins.businessName}</Text>
+                        <Text>{pins.description}</Text>
+                      </View>
+                      <Text>
+                        <Image
+                          source={{
+                            uri: 'https://cdn-icons-png.flaticon.com/512/2589/2589197.png',
+                          }}
+                          width={30}
+                          height={30}
+                          resizeMode="cover"
+                        />
+                      </Text>
+                    </View>
+
+                    <View style={styles.imagePin}>
+                      <Text>
+                        {pins.image && (
+                          <Image
+                            style={styles.image}
+                            source={{uri: pins.image.url}}
+                          />
+                        )}
+                      </Text>
+
+                      <Button
+                        onPress={() => setOpenModal(true)}
+                        title="menu"
+                        color="#000"
+                      />
+                    </View>
+                  </View>
+                </View>
+              </Callout>
+            </Marker>
+          ))}
+
         {isAddingPin && (
           <Marker
             draggable
             coordinate={markerCoords}
-            onDragStart={() => setIsDragging(true)}
-            onDragEnd={e => {
-              setIsDragging(false);
-              setMarkerCoords(e.nativeEvent.coordinate);
-            }}
+            onDragEnd={e => setMarkerCoords(e.nativeEvent.coordinate)}
           />
         )}
       </MapView>
-      {isDragging && <Text>Drag the pin to adjust location</Text>}
-      <Button
-        title="Confirm"
-        onPress={handleConfirm}
-        disabled={!markerCoords}
-      />
-      <Button title="Add Pin" onPress={handleAddPin} />
-      {/* Modal */}
-      <Modal isVisible={isModalVisible} style={styles.modalContainer}>
-        <View style={styles.buttonContainers}>
-          <Button
-            style={styles.button}
-            title="Public"
-            color="#017E5E"
-            onPress={() => handleButtonClick('Public')}
-          />
-          <Button
-            style={styles.button}
-            title="Friends"
-            color="#017E5E"
-            onPress={() => handleButtonClick('Friends')}
-          />
-          <Button
-            style={styles.button}
-            title="Groups"
-            color="#017E5E"
-            onPress={() => handleButtonClick('Groups')}
-          />
-          <Button
-            style={styles.button}
-            title="Businesses"
-            color="#017E5E"
-            onPress={() => handleButtonClick('Businesses')}
-          />
+
+      {openModal && (
+        <View className="flex-[1] justify-center items-center mt-[22]">
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={openModal}
+            onRequestClose={() => {
+              setOpenModal(!openModal);
+            }}>
+            <TouchableWithoutFeedback onPress={() => setOpenModal(false)}>
+              <View className="flex-[1] justify-end bg-[#00000059]">
+                <TouchableWithoutFeedback onPress={() => setOpenModal(true)}>
+                  <View className="w-full bg-[#fff] h-[120] rounded-[20px] p-[20px] items-center shadow-[#000] shadow-inner">
+                    <TouchableOpacity
+                      className="w-full bg-[#00000010] h-[50px] rounded-[10px] items-center flex-row pl-5"
+                      onPress={() => deletePinHandler(pins._id)}>
+                      <Text className="text-[18px] font-[600] text-[#e24848]">
+                        Delete
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
+            </TouchableWithoutFeedback>
+          </Modal>
         </View>
-        <Button color="#017E5E" title="Close" onPress={toggleModal} />
-      </Modal>
+      )}
+
+      {!isAddingPin && (
+        <TouchableOpacity style={styles.addButton} onPress={handleAddPin}>
+          <Image source={require('../assets/maps/addPin.png')} />
+        </TouchableOpacity>
+      )}
+
+      {isAddingPin && (
+        <View style={styles.confirmButtons}>
+          <TouchableOpacity
+            style={styles.confirmButton}
+            onPress={handleConfirm}>
+            <Text style={styles.buttonText}>Confirm</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={() => setIsAddingPin(false)}>
+            <Text style={styles.buttonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      <RNModal visible={isAddingForm} animationType="slide" transparent>
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalText}>
+            Fill up the form for your business pin:
+          </Text>
+          <TouchableOpacity
+            className="Profileicon h-[67] justify-start items-center pl-6 gap-[20] flex-row"
+            onPress={uploadImage}>
+            <Image
+              className="w-[70] h-[70] rounded-[90px]"
+              source={{
+                uri: image
+                  ? image
+                  : 'https://cdn-icons-png.flaticon.com/512/8801/8801434.png',
+              }}
+            />
+
+            <Text
+              className="ProfileIcon text-black text-13 font-bold font-['Roboto'] tracking-tight"
+              onPress={uploadImage}>
+              Business Image
+            </Text>
+          </TouchableOpacity>
+          <TextInput
+            style={styles.input}
+            placeholder="Business Name"
+            value={businessName}
+            onChangeText={text => setBusinessName(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Description"
+            value={description}
+            onChangeText={text => setDescription(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Category"
+            value={category}
+            onChangeText={text => setCategory(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone"
+            value={contactInfo.phone}
+            onChangeText={text => setContactInfo({...contactInfo, phone: text})}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={contactInfo.email}
+            onChangeText={text => setContactInfo({...contactInfo, email: text})}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Website"
+            value={contactInfo.website}
+            onChangeText={text =>
+              setContactInfo({...contactInfo, website: text})
+            }
+          />
+          <Button title="Submit" onPress={handleSubmit} />
+          <Button title="Cancel" onPress={() => setIsAddingForm(false)} />
+        </View>
+      </RNModal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  modeLabel: {
-    color: '#017E5E',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    marginTop: 10,
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: '50%',
-    marginLeft: -75,
-  },
-  mapset: {
-    flexDirection: 'row',
-    padding: 10,
-    marginHorizontal: 20,
-    marginRight: 80,
-    marginTop: 12,
-    position: 'absolute',
-    zIndex: 1,
-    backgroundColor: 'white',
-    borderColor: 'black',
+  calloutContainer: {
+    width: 350,
+    height: 250,
+    flexDirection: 'column',
+    backgroundColor: '#E0FBE2',
+    borderRadius: 10,
     borderWidth: 1,
-    borderRadius: 8,
-    shadowColor: 'black',
+    borderColor: '#ccc',
+    shadowColor: '#000',
+    paddingTop: 5,
+    paddingLeft: 20,
+    paddingRight: 20,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -362,36 +658,62 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
+    alignSelf: 'center',
+    justifyContent: 'center',
   },
-  buttonContainers: {
-    justifyContent: 'space-around',
-    margin: 10,
+  titleHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  imagePin: {
+    width: 70,
+    height: 100,
+  },
+  image: {
+    width: 70,
+    height: 70,
+  },
+  textContainer: {
+    flex: 1,
+    flexDirection: 'column',
+    height: 20,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 1,
+  },
+  description: {},
+  container: {
+    flex: 1,
+  },
+  mapset: {
+    flexDirection: 'row',
+    position: 'absolute',
+    zIndex: 1,
+    alignSelf: 'center',
+    bottom: 20,
   },
   button: {
     marginBottom: 10,
     width: 100,
   },
   modalContainer: {
-    backgroundColor: '#F1FFF8',
-    padding: 16,
-    borderRadius: 8,
-    width: 300,
-    height: 200,
+    position: 'absolute',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    margin: 20,
+    bottom: 20,
     alignSelf: 'center',
-    marginTop: '140%',
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 20,
+    fontSize: 18,
   },
   map: {
     flex: 1,
-  },
-  bubble: {
-    flexDirection: 'row',
-    alighSelf: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 6,
-    borderColor: '#ccc',
-    borderWidth: 0.5,
-    padding: 15,
-    width: 150,
   },
   name: {
     fontSize: 16,
@@ -399,26 +721,38 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     paddingRight: 20,
   },
-  arrow: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    borderWidth: 16,
+  addButton: {
+    position: 'absolute',
+    bottom: 20,
     alignSelf: 'center',
-    marginTop: -32,
-  },
-  arrowBorder: {
-    backgroundColor: 'transparent',
-    borderColor: 'transparent',
-    borderTopColor: '#007a87',
-    borderwidth: 16,
-    alignSelf: 'center',
-    marginTop: -0.5,
-    marginBottom: -15,
-  },
-  image: {
-    width: 50,
-    height: 50,
     zIndex: 1,
+  },
+  confirmButtons: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  confirmButton: {
+    backgroundColor: 'green',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginRight: 5,
+  },
+  cancelButton: {
+    backgroundColor: 'red',
+    padding: 10,
+    borderRadius: 5,
+    flex: 1,
+    marginLeft: 5,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
   },
 });
 

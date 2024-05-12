@@ -4,7 +4,7 @@ import {postReducer} from './reducers/postReducer';
 import {notificationReducer} from './reducers/notificationReducer';
 import {pinReducer} from './reducers/pinReducer';
 
-const Store = configureStore({
+const store = configureStore({
   reducer: {
     user: userReducer,
     post: postReducer,
@@ -13,9 +13,9 @@ const Store = configureStore({
   },
   middleware: getDefaultMiddleware =>
     getDefaultMiddleware({
-      immutableCheck: false,
-      serializableCheck: false,
+      thunk: true, // Ensure Redux Thunk middleware is enabled
+      serializableCheck: false, // Disable serializableCheck
     }),
 });
 
-export default Store;
+export default store;

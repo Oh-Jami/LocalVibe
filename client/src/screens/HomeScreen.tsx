@@ -220,9 +220,9 @@ const HomeScreen = ({navigation}: Props) => {
   const onRefreshHandler = async () => {
     setRefreshing(true);
     try {
+      await submitLocation();
       await getAllPosts()(dispatch);
       await getAllUsers()(dispatch);
-      await submitLocation();
     } finally {
       setRefreshing(false);
     }

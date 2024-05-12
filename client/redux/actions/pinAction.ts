@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // create pin
 export const createPinAction =
   (
+    createdBy: object,
     businessName: string,
     description: string,
     category: string,
@@ -25,6 +26,7 @@ export const createPinAction =
       const {data} = await axios.post(
         `${URI}/create-pin`,
         {
+          createdBy,
           businessName,
           description,
           category,
@@ -78,79 +80,29 @@ export const getAllPins = () => async (dispatch: Dispatch<any>) => {
   }
 };
 
-// add likes to pin
-export const addLikesToPin =
-  ({pinId, pins, user}: any) =>
-  async (dispatch: Dispatch<any>) => {
+export const deletePinAction =
+  (pinId: string) => async (dispatch: Dispatch<any>) => {
     try {
-      const token = await AsyncStorage.getItem('token');
-
-      const updatedPins = pins.map((pin: any) =>
-        pin._id === pinId
-          ? {
-              ...pin,
-              likes: [
-                ...pin.likes,
-                {
-                  userName: user.name,
-                  userId: user._id,
-                  userAvatar: user.avatar.url,
-                  pinId,
-                },
-              ],
-            }
-          : pin,
-      );
-
       dispatch({
-        type: 'getAllPinsSuccess',
-        payload: updatedPins,
+        type: 'pinDeleteRequest',
       });
 
-      await axios.put(
-        `${URI}/update-likes-pin`,
-        {pinId},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-    } catch (error: any) {
-      console.error('Error adding likes to pin:', error);
-    }
-  };
-
-// remove likes from pin
-export const removeLikesFromPin =
-  ({pinId, pins, user}: any) =>
-  async (dispatch: Dispatch<any>) => {
-    try {
       const token = await AsyncStorage.getItem('token');
 
-      const updatedPins = pins.map((pin: any) =>
-        pin._id === pinId
-          ? {
-              ...pin,
-              likes: pin.likes.filter((like: any) => like.userId !== user._id),
-            }
-          : pin,
-      );
-      dispatch({
-        type: 'getAllPinsSuccess',
-        payload: updatedPins,
+      await axios.delete(`${URI}/delete-pin/${pinId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
-      await axios.put(
-        `${URI}/update-likes-pin`,
-        {pinId},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      dispatch({
+        type: 'pinDeleteSuccess',
+        payload: pinId,
+      });
     } catch (error: any) {
-      console.error('Error removing likes from pin:', error);
+      dispatch({
+        type: 'pinDeleteFailed',
+        payload: error.response.data.message,
+      });
     }
   };
