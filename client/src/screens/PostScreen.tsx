@@ -3,7 +3,7 @@ import React, {useEffect, useState} from 'react';
 import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
-import { createPostAction, getAllPosts } from '../../redux/actions/postAction';
+import {createPostAction, getAllPosts} from '../../redux/actions/postAction';
 
 type Props = {
   navigation: any;
@@ -23,10 +23,6 @@ const PostScreen = ({navigation}: Props) => {
       replies[0].image === ''
     ) {
       setReplies([]);
-    }
-    if (isSuccess) {
-      navigation.goBack();
-      getAllPosts()(dispatch);
     }
     setReplies([]);
     setTitle('');
@@ -59,13 +55,16 @@ const PostScreen = ({navigation}: Props) => {
     if (title !== '' || (image !== '' && !isLoading)) {
       createPostAction(title, image, user, replies)(dispatch);
     }
+    navigation.navigate('Home');
   };
 
   return (
     <SafeAreaView className="flex-1 justify-between bg-green-50">
       <View>
         <View className="w-full flex-row items-center bg-white">
-          <TouchableOpacity className="p-2" onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            className="p-2"
+            onPress={() => navigation.navigate('Home')}>
             <Image source={require('../assets/back.png')} />
           </TouchableOpacity>
           <Text className="pl-4 text-[20px] font-[500] text-emerald-700">
@@ -112,15 +111,22 @@ const PostScreen = ({navigation}: Props) => {
             />
           </View>
         )}
-
       </View>
       <View className="p-2">
-              <View className="w-full flex-row justify-end">
-                <TouchableOpacity onPress={createPost} style={{ backgroundColor: '#017E5E', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 15, width: '100%' }}>
-                  <Text className="text-white text-center">Post</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+        <View className="w-full flex-row justify-end">
+          <TouchableOpacity
+            onPress={createPost}
+            style={{
+              backgroundColor: '#017E5E',
+              borderRadius: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 15,
+              width: '100%',
+            }}>
+            <Text className="text-white text-center">Post</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </SafeAreaView>
   );
 };

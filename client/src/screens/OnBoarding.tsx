@@ -1,4 +1,11 @@
-import {View, Dimensions, StyleSheet, TouchableOpacity, Image, StatusBar} from 'react-native';
+import {
+  View,
+  Dimensions,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  StatusBar,
+} from 'react-native';
 import Onboarding from 'react-native-onboarding-swiper';
 import LottieView from 'lottie-react-native';
 import React from 'react';
@@ -11,38 +18,36 @@ export default function OnBoarding() {
   const navigation = useNavigation();
 
   const handleDone = () => {
-    navigation.navigate('Home');
     setItem('onBoarded', '1');
+    navigation.navigate('Home');
   };
 
-  const doneButton = require('../assets/onboard/done.png');
+  const doneButton = require('../assets/onboard/done2.png');
 
-//   const CustomDoneButton = ({ ...props }) => {
-//     return (
-//       <TouchableOpacity {...props}>
-//         <Image source={doneButton} style={styles.done}/>
-//       </TouchableOpacity>
-//     );
-//   };
-
-  const onboardingbg = require('../assets/onboardingbg.png');
+  const CustomDoneButton = ({...props}) => {
+    return (
+      <TouchableOpacity {...props}>
+        <Image source={doneButton} style={styles.done} />
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar 
-      backgroundColor="#F1FFF8" 
-      barStyle='dark-content' 
-      showHideTransition='fade'
+      <StatusBar
+        backgroundColor="#E0FBE2"
+        barStyle="dark-content"
+        showHideTransition="fade"
       />
       <Onboarding
         onDone={handleDone}
         onSkip={handleDone}
-        // DoneButtonComponent={CustomDoneButton}
+        DoneButtonComponent={CustomDoneButton}
         containerStyles={{paddingHorizontal: 15}}
-        bottomBarColor='#017E5E'
+        bottomBarColor="#E0FBE2"
         pages={[
           {
-            backgroundColor: '#F1FFF8',
+            backgroundColor: '#E0FBE2',
             image: (
               <View>
                 <LottieView
@@ -58,7 +63,7 @@ export default function OnBoarding() {
               "Step into LocalVibe, where unity, friendships, and belonging flourish. Let's create a thriving community together!",
           },
           {
-            backgroundColor: '#F1FFF8',
+            backgroundColor: '#BFF6C3',
             image: (
               <View>
                 <LottieView
@@ -74,7 +79,7 @@ export default function OnBoarding() {
               'Explore local treasures, support businesses, and foster community with LocalVibe. Join the journey!',
           },
           {
-            backgroundColor: '#F1FFF8',
+            backgroundColor: '#B0EBB4',
             image: (
               <View>
                 <LottieView
@@ -87,10 +92,10 @@ export default function OnBoarding() {
             ),
             title: 'Proximity-Based Feeds!',
             subtitle:
-              'Discover the magic of proximity with LocalVibe! Our Proximity-Based Feeds keep ',
+              'Discover the magic of proximity with LocalVibe! Our Proximity-Based Feeds keep you connected with your community. ',
           },
           {
-            backgroundColor: '#F1FFF8',
+            backgroundColor: '#ACE1AF',
             image: (
               <View>
                 <LottieView
@@ -106,7 +111,7 @@ export default function OnBoarding() {
               'Elevate your events with LocalVibe! Bring people together like never before.',
           },
           {
-            backgroundColor: '#F1FFF8',
+            backgroundColor: '#8DECB4',
             image: (
               <View>
                 <LottieView
@@ -138,7 +143,8 @@ const styles = StyleSheet.create({
   },
   done: {
     position: 'relative',
-    width: width * 0.9,
+    marginRight: 10,
+    width: width * 0.1,
     height: width * 0.1,
-  }
+  },
 });

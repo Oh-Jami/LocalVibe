@@ -70,8 +70,8 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 android {
     ndkVersion rootProject.ext.ndkVersion
-    compileSdkVersion 27
-    buildToolsVersion "27.0.3"
+    compileSdkVersion 31
+    buildToolsVersion "31.0.0"
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     namespace "com.client"
@@ -82,7 +82,7 @@ android {
         vectorDrawables.useSupportLibrary = true
         versionCode 1
         versionName "1.0"
-        targetSdkVersion 27
+        targetSdkVersion 31
     }
     signingConfigs {
         release {

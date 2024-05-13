@@ -162,6 +162,10 @@ const HomeScreen = ({navigation}: Props) => {
   }, []);
 
   useEffect(() => {
+    console.log('OutsideUpdated userData:', userData);
+  }, [userData]);
+
+  useEffect(() => {
     getAllPosts()(dispatch);
     getAllUsers()(dispatch);
   }, [dispatch]);
@@ -193,8 +197,8 @@ const HomeScreen = ({navigation}: Props) => {
   const nearbyPosts = posts
     .filter((post: {user: {latitude: number; longitude: number}}) => {
       const distance = haversine(
-        user.latitude,
-        user.longitude,
+        userData.latitude,
+        userData.longitude,
         post.user.latitude,
         post.user.longitude,
       );
@@ -229,8 +233,8 @@ const HomeScreen = ({navigation}: Props) => {
   };
 
   const submitLocation = async () => {
-    await axios
-      .put(
+    try {
+      await axios.put(
         `${URI}/update-coor`,
         {
           latitude: userData.latitude,
@@ -241,10 +245,17 @@ const HomeScreen = ({navigation}: Props) => {
             Authorization: `Bearer ${token}`,
           },
         },
-      )
-      .then((res: any) => {
-        loadUser()(dispatch);
-      });
+      );
+      loadUser()(dispatch);
+    } catch (error) {
+      if (error.response && error.response.status === 401) {
+        // Handle 401 unauthorized error, e.g., redirect to login screen
+        console.error('Unauthorized: Please log in again');
+      } else {
+        // Handle other errors
+        console.error('An error occurred:', error.message);
+      }
+    }
   };
 
   return (

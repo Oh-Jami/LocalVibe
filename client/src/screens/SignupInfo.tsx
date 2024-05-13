@@ -11,6 +11,7 @@ import React, {useEffect, useState} from 'react';
 import ImagePicker, {ImageOrVideo} from 'react-native-image-crop-picker';
 import {useDispatch, useSelector} from 'react-redux';
 import {registerUser} from '../../redux/actions/userAction';
+import {Picker} from '@react-native-picker/picker';
 
 type Props = {
   navigation: any;
@@ -27,6 +28,8 @@ const SignupScreen = ({navigation, route}: Props) => {
   const [avatar, setAvatar] = useState('');
 
   const {email = useState(''), password = useState('')} = route.params;
+
+  const [accountType, setAccountType] = useState('Personal');
 
   const uploadImage = () => {
     ImagePicker.openPicker({
@@ -75,7 +78,7 @@ const SignupScreen = ({navigation, route}: Props) => {
   }, [error, isAuthenticated]);
 
   return (
-    <View className="w-full h-full flex-col justify-start items-center">
+    <View className="bg-teal-50 w-full h-full flex-col justify-start items-center">
       <ImageBackground
         className="w-full h-full top-0 absolute top"
         source={backgroundImage}
@@ -92,7 +95,7 @@ const SignupScreen = ({navigation, route}: Props) => {
         </View>
 
         <View className="flex-col justify-center items-start gap-[5px] ">
-          <View className="SettingIcon w-full h-[67] justify-start items-start flex-row ">
+          <View className="SettingIcon w-full h-[180] justify-start items-start flex-col ">
             <View className="GettingStarted flex-col justify-start items-start flex">
               <Text className="SettingUpProfile w-[165] text-black text-xl font-bold font-['Roboto'] tracking-tight">
                 Setting up profile
@@ -103,7 +106,7 @@ const SignupScreen = ({navigation, route}: Props) => {
             </View>
 
             <TouchableOpacity
-              className="Profileicon h-[67] justify-start items-center pl-6 gap-[20] flex-row"
+              className="Profileicon h-130 justify-start items-center flex-col rounded-[10px] shadow border border-neutral-400 border-opacity-20 bg-white p-5 my-5"
               onPress={uploadImage}>
               <Image
                 className="w-[70] h-[70] rounded-[90px]"
@@ -115,9 +118,9 @@ const SignupScreen = ({navigation, route}: Props) => {
               />
 
               <Text
-                className="ProfileIcon text-black text-13 font-bold font-['Roboto'] tracking-tight"
+                className="ProfileIcon text-black text-[15px] font-bold font-['Roboto'] tracking-tight"
                 onPress={uploadImage}>
-                Profile Icon
+                Upload Profile Icon
               </Text>
             </TouchableOpacity>
           </View>
@@ -135,15 +138,19 @@ const SignupScreen = ({navigation, route}: Props) => {
                 />
               </View>
             </View>
-            <View className="flex-row justify-between items-center gap-x-6">
-              <View className="flex-col justify-center items-start gap-y-1.5">
-                <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
-                  Account Type
-                </Text>
-                <TextInput
-                  placeholder="Account Type"
-                  className="w-[166px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20"
-                />
+            <View>
+              <Text className="text-black text-[13px] font-bold font-roboto tracking-tight">
+                Account Type
+              </Text>
+              <View className="w-[356px] h-[39px] bg-white rounded-[10px] shadow border border-neutral-400 border-opacity-20">
+                <Picker
+                  prompt="Select an account type"
+                  selectedValue={accountType}
+                  onValueChange={itemValue => setAccountType(itemValue)}
+                  style={{flex: 1, fontSize: 16}}>
+                  <Picker.Item label="Personal" value="Personal" />
+                  <Picker.Item label="Business" value="Business" />
+                </Picker>
               </View>
             </View>
           </View>

@@ -530,7 +530,7 @@ const MapScreen = ({navigation}: Props) => {
             }}
             title="Your Location"
             description="Your are here"
-            image={require('../assets/maps/pin.png')}>
+            image={require('../assets/maps/location.png')}>
             <Callout tooltip>
               <View>
                 <View style={styles.bubble}>
@@ -570,7 +570,7 @@ const MapScreen = ({navigation}: Props) => {
               }}
               title={pins.businessName}
               description={pins.description}
-              image={require('../assets/maps/pin.png')}></Marker>
+              image={require('../assets/maps/location.png')}></Marker>
           ))}
 
         {isAddingPin && (
@@ -696,7 +696,7 @@ const MapScreen = ({navigation}: Props) => {
                     </TouchableOpacity>
                   </View>
 
-                  <View style={styles.button}>
+                  {/* <View style={styles.button}>
                     {isCurrentUserPin(pins.CreatedBy, user._Id) && (
                       <TouchableOpacity
                         onPress={() => setOpenModal(true)}
@@ -718,7 +718,7 @@ const MapScreen = ({navigation}: Props) => {
                         </Text>
                       </TouchableOpacity>
                     )}
-                  </View>
+                  </View> */}
                 </View>
               </View>
             </View>

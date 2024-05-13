@@ -71,7 +71,7 @@ const UserProfileScreen = ({navigation, route}: Props) => {
   return (
     <>
       {data && (
-        <SafeAreaView className='bg-[#F1FFF8]'>
+        <SafeAreaView className="bg-[#F1FFF8]">
           <StatusBar backgroundColor="#F1FFF8" barStyle="dark-content" />
           {imagePreview ? (
             <TouchableOpacity
@@ -97,7 +97,7 @@ const UserProfileScreen = ({navigation, route}: Props) => {
               </TouchableOpacity>
               <ScrollView showsVerticalScrollIndicator={false}>
                 <View className="w-full flex-row">
-                  <View className='w-[80%]'>
+                  <View className="w-[80%]">
                     <Text className="pt-3 text-[22px] text-black">
                       {data.name}
                     </Text>

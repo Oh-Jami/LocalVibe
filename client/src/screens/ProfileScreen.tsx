@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   Button,
   StatusBar,
+  StyleSheet,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import {Dimensions} from 'react-native';
 import {loadUser, logoutUser} from '../../redux/actions/userAction';
 import PostCard from '../components/PostCard';
+
+import {Avatar, Title, Caption, TouchableRipple} from 'react-native-paper';
 
 type Props = {
   navigation: any;
@@ -51,70 +54,79 @@ const ProfileScreen = ({navigation}: Props) => {
     <ScrollView showsVerticalScrollIndicator={false}>
       <StatusBar backgroundColor="#F1FFF8" barStyle="dark-content" />
       <SafeAreaView className="relative bg-[#F1FFF8] drop-shadow-2xl">
-        <View className='bg-[#F1FFF8]'>
-          <View className="px-3 pt-3">
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Image
-                source={{
-                  uri: 'https://cdn-icons-png.flaticon.com/512/2223/2223615.png',
-                }}
-                height={25}
-                width={25}
-              />
-            </TouchableOpacity>
-          </View>
-          <View
-            className="flex-row justify-between bg-white"
-            style={{width: width, padding: 10}}>
-            <View>
-              <Text className="text-[#000] text-[30px]">{user?.name}</Text>
-              <Text className="text-[#0000009d] text-[20px]">
-                {user?.userName}
-              </Text>
-            </View>
-
-            <View className="relative">
-              <Image
-                source={{uri: user?.avatar.url}}
-                height={80}
-                width={80}
-                borderRadius={100}
-              />
-              {user.role === 'Admin' && (
-                <Image
-                  source={{
-                    uri: 'https://cdn-icons-png.flaticon.com/128/1828/1828640.png',
-                  }}
-                  width={18}
-                  height={18}
-                  className="ml-2 absolute bottom-0 left-0"
-                />
-              )}
+        <View className="px-3 pt-3">
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Image
+              source={{
+                uri: 'https://cdn-icons-png.flaticon.com/512/2223/2223615.png',
+              }}
+              height={25}
+              width={25}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.userInfoSection}>
+          <View style={{flexDirection: 'row', marginTop: 15}}>
+            <Image
+              source={{uri: user?.avatar.url}}
+              height={80}
+              width={80}
+              borderRadius={100}
+            />
+            <View style={{marginLeft: 20}}>
+              <Title
+                style={[
+                  styles.title,
+                  {
+                    marginTop: 15,
+                    marginBottom: 5,
+                  },
+                ]}>
+                {user?.name}
+              </Title>
+              <Caption style={styles.caption}>{user?.userName}</Caption>
             </View>
           </View>
-          <Text className="p-3 text-[#000000d4] font-sans leading-6 text-[18px]">
-            {user?.bio}
-          </Text>
-          <View className="p-3">
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('FollowerCard', {
-                  followers: user?.followers,
-                  following: user?.following,
-                })
-              }>
+        </View>
 
-              <View className='flex-row items-center justify-between w-[50%]'>
-                <Text className="text-[16px] text-[#444]">
-                  {user?.followers.length} followers
-                </Text>
-                <Text className="text-[16px] text-[#444]">
-                  {user?.following.length} following
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-          <View className="px-8 py-3 flex-row w-full items-center">
+        <Text className="p-3 text-[#000000d4] font-sans leading-6 text-[18px]">
+          {user?.bio}
+        </Text>
+
+        <View style={styles.infoBoxWrapper}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowerCard', {
+                followers: user?.followers,
+                following: user?.following,
+              })
+            }
+            style={[
+              styles.infoBox,
+              {
+                borderRightColor: '#dddddd',
+                borderRightWidth: 1,
+              },
+            ]}>
+            <Title>{user?.followers.length}</Title>
+            <Caption>Followers</Caption>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowerCard', {
+                followers: user?.followers,
+                following: user?.following,
+              })
+            }
+            style={styles.infoBox}>
+            <Title>{user?.following.length}</Title>
+            <Caption>Following</Caption>
+          </TouchableOpacity>
+        </View>
+
+        <View className="bg-[#F1FFF8]">
+          <View className="px-8 py-3 flex-col w-full items-center">
             <TouchableOpacity
               onPress={() => navigation.navigate('EditProfile')}>
               <Text
@@ -122,18 +134,19 @@ const ProfileScreen = ({navigation}: Props) => {
                 style={{
                   borderColor: '#666',
                   borderWidth: 1,
-                  backgroundColor: 'transparent',
+                  backgroundColor: '#8DECB4',
                 }}>
                 Edit Profile
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity className="ml-5" onPress={logoutHandler}>
+
+            <TouchableOpacity className="mt-5" onPress={logoutHandler}>
               <Text
-                className="w-[100] pt-1 text-center h-[30px] text-[#000]"
+                className="w-[100] pt-1 text-center h-[30px] text-[#fff]"
                 style={{
                   borderColor: '#666',
                   borderWidth: 1,
-                  backgroundColor: 'transparent',
+                  backgroundColor: '#FA7070',
                 }}>
                 Log Out
               </Text>
@@ -202,15 +215,65 @@ const ProfileScreen = ({navigation}: Props) => {
           <>
             {repliesData.length === 0 && (
               <Text className="text-black text-[14px] mt-8 text-center">
-                No Post yet!
+                No Interactions yet!
               </Text>
             )}
           </>
         )}
-
       </SafeAreaView>
     </ScrollView>
   );
 };
 
 export default ProfileScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  userInfoSection: {
+    paddingHorizontal: 30,
+    marginBottom: 25,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  caption: {
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  infoBoxWrapper: {
+    borderBottomColor: '#dddddd',
+    borderBottomWidth: 1,
+    borderTopColor: '#dddddd',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    height: 70,
+  },
+  infoBox: {
+    width: '50%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuWrapper: {
+    marginTop: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+  },
+  menuItemText: {
+    color: '#777777',
+    marginLeft: 20,
+    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 26,
+  },
+});
