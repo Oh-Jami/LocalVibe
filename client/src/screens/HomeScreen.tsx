@@ -160,7 +160,7 @@ const HomeScreen = ({navigation}: Props) => {
 
   useEffect(() => {
     console.log('OutsideUpdated userData:', userData);
-  }, [userData]);
+  }, []);
 
   useEffect(() => {
     getAllPosts()(dispatch);
@@ -230,6 +230,7 @@ const HomeScreen = ({navigation}: Props) => {
   };
 
   const submitLocation = async () => {
+    console.log('submiting coor');
     try {
       await axios.put(
         `${URI}/update-coor`,

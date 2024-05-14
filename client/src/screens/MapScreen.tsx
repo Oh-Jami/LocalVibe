@@ -1161,3 +1161,18 @@ const styles = StyleSheet.create({
 });
 
 export default MapScreen;
+
+function setWatchID(arg0: number) {
+  throw new Error('Function not implemented.');
+}
+function animateToRegion(
+  arg0: {
+    latitude: any;
+    longitude: any;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  },
+  arg1: number,
+) {
+  throw new Error('Function not implemented.');
+}
