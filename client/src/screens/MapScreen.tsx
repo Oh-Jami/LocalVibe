@@ -18,7 +18,13 @@ import {
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
-import MapView, {Callout, Marker, PROVIDER_GOOGLE} from 'react-native-maps';
+import Slider from '@react-native-community/slider';
+import MapView, {
+  Callout,
+  Circle,
+  Marker,
+  PROVIDER_GOOGLE,
+} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import {GeoPosition} from 'react-native-geolocation-service';
 import axios from 'axios';
@@ -33,7 +39,7 @@ import StarRating from '../components/StarRating';
 const {width, height} = Dimensions.get('window');
 const CARD_HEIGHT = 240;
 const CARD_WIDTH = width * 0.8;
-const SPACING_FOR_CARD_INSET = width * 0.1 - 10;
+const SPACING_FOR_CARD_INSET = width * 0.1 - 25;
 
 type Props = {
   navigation: any;
@@ -77,6 +83,18 @@ const MapScreen = ({navigation}: Props) => {
 
   const [newProximityThreshold, setNewProximityThreshold] = useState(5);
 
+  const [center, setCenter] = useState({
+    latitude: user?.latitude,
+    longitude: user?.longitude,
+  });
+  const [radius, setRadius] = useState(500);
+
+  const kmToMeters = (km: number) => km * 1000;
+
+  useEffect(() => {
+    setRadius(kmToMeters(newProximityThreshold));
+  }, [newProximityThreshold]);
+
   const handleAddPin = () => {
     setIsAddingPin(true);
   };
@@ -85,21 +103,53 @@ const MapScreen = ({navigation}: Props) => {
     navigation.navigate('BusinessPinScreen', {pins});
   };
 
-  const _map = React.useRef(null);
-  const _scrollView = React.useRef(null);
+  const _scrollView: React.MutableRefObject<any> = useRef(null);
+  const _map: React.MutableRefObject<any> = useRef(null);
 
   const [openModal, setOpenModal] = useState(false);
+  const [showThreshold, setShowThreshold] = useState(false);
+
+  const openThreshold = () => {
+    setShowThreshold(true);
+  };
+
+  const closeThreshold = () => {
+    setShowThreshold(false);
+  };
+
+  const updateProximityThreshold = () => {
+    const newThreshold = newProximityThreshold;
+
+    const minThreshold = 0.5;
+    const maxThreshold = 10;
+
+    if (
+      !isNaN(newThreshold) &&
+      newThreshold >= minThreshold &&
+      newThreshold <= maxThreshold
+    ) {
+      setNewProximityThreshold(newThreshold);
+      setShowThreshold(false);
+      (_map.current as MapView).animateToRegion(
+        {
+          latitude: user?.latitude,
+          longitude: user?.longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        350,
+      );
+    } else {
+      alert(
+        `Proximity threshold must be between ${minThreshold} and ${maxThreshold}`,
+      );
+    }
+  };
 
   const handleConfirm = () => {
     console.log('Pinned location:', markerCoords);
     setIsAddingPin(false);
     setIsAddingForm(true);
-  };
-
-  const isCurrentUserPin = (pinCreatedBy: string, currentUserId: string) => {
-    // console.log(pinCreatedBy);
-    // console.log(currentUserId);
-    return pinCreatedBy === currentUserId;
   };
 
   const deletePinHandler = async (e: any) => {
@@ -209,6 +259,7 @@ const MapScreen = ({navigation}: Props) => {
   };
 
   const {pins} = useSelector((state: any) => state.pin);
+
   const nearbypin = pins.filter(
     (pins: {latitude: number; longitude: number}) => {
       const distance = haversine(
@@ -217,6 +268,7 @@ const MapScreen = ({navigation}: Props) => {
         pins.latitude,
         pins.longitude,
       );
+
       return distance <= newProximityThreshold;
     },
   );
@@ -413,26 +465,30 @@ const MapScreen = ({navigation}: Props) => {
     },
   ];
 
-  const [currentPinIndex, setCurrentPinIndex] = useState(0);
+  const [currentPinIndex, setCurrentPinIndex] = useState('');
 
   const calculateCurrentPinIndex = (offsetX: number) => {
-    const index = Math.floor(offsetX / (CARD_WIDTH + 20));
+    const index = Math.floor(offsetX / (CARD_WIDTH + 25));
     setCurrentPinIndex(index);
   };
 
   useEffect(() => {
-    const pin = pins[currentPinIndex];
-    if (pin && _map.current) {
-      const {latitude, longitude} = pin;
-      (_map.current as MapView).animateToRegion(
-        {
-          latitude,
-          longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        350,
-      );
+    console.log(currentPinIndex);
+
+    if (typeof currentPinIndex === 'number' && currentPinIndex >= -1) {
+      const pin = pins[currentPinIndex + 1];
+      if (pin && _map.current) {
+        const {latitude, longitude} = pin;
+        (_map.current as MapView).animateToRegion(
+          {
+            latitude,
+            longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          350,
+        );
+      }
     }
   }, [currentPinIndex, pins]);
 
@@ -503,9 +559,35 @@ const MapScreen = ({navigation}: Props) => {
     };
   }, []);
 
+  const handlePinMarkerPress = (pin: any) => {
+    const index = nearbypin.findIndex((p: {_id: any}) => p._id === pin._id);
+
+    if (_scrollView.current) {
+      _scrollView.current.scrollTo({
+        x: index * (CARD_WIDTH + 20),
+        animated: true,
+      });
+    }
+
+    const {latitude, longitude} = pin;
+
+    if (_map.current) {
+      _map.current.animateToRegion(
+        {
+          latitude,
+          longitude,
+          latitudeDelta: 0.005,
+          longitudeDelta: 0.005,
+        },
+        350,
+      );
+    }
+  };
+
   return (
     <View style={styles.container}>
       <MapView
+        ref={_map}
         provider={PROVIDER_GOOGLE}
         style={{flex: 1}}
         customMapStyle={customMapStyle}
@@ -560,18 +642,19 @@ const MapScreen = ({navigation}: Props) => {
           </Marker>
         )}
 
-        {pins &&
-          pins.map((pins: any) => (
-            <Marker
-              key={pins._id}
-              coordinate={{
-                latitude: pins.latitude,
-                longitude: pins.longitude,
-              }}
-              title={pins.businessName}
-              description={pins.description}
-              image={require('../assets/maps/location.png')}></Marker>
-          ))}
+        {nearbypin.map((pin: any) => (
+          <Marker
+            key={pin._id}
+            coordinate={{
+              latitude: pin.latitude,
+              longitude: pin.longitude,
+            }}
+            title={pin.businessName}
+            description={pin.description}
+            image={require('../assets/maps/location.png')}
+            onPress={() => handlePinMarkerPress(pin)}
+          />
+        ))}
 
         {isAddingPin && (
           <Marker
@@ -580,17 +663,63 @@ const MapScreen = ({navigation}: Props) => {
             onDragEnd={e => setMarkerCoords(e.nativeEvent.coordinate)}
           />
         )}
+
+        {showThreshold && (
+          <Circle
+            center={center}
+            radius={radius}
+            fillColor="rgba(0, 255, 0, 0.2)"
+            strokeColor="rgba(0, 255, 0, 0.5)"
+          />
+        )}
       </MapView>
 
-      <View style={styles.searchBox}>
-        <TextInput
-          placeholder="Search here"
-          placeholderTextColor="#000"
-          autoCapitalize="none"
-          style={{flex: 1, padding: 0}}
-        />
-        <Image source={require('../assets/newsfeed/search.png')} />
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showThreshold}
+        onRequestClose={closeThreshold}>
+        <View style={styles.modalContainer}>
+          <Text>
+            Adjust proximity threshold (in km):{' '}
+            {newProximityThreshold.toFixed(2)} km
+          </Text>
+          <Slider
+            style={{width: '100%', marginTop: 10}}
+            minimumValue={0.5}
+            maximumValue={10}
+            minimumTrackTintColor="#017E5E"
+            maximumTrackTintColor="#ccc"
+            thumbTintColor="#017E5E"
+            value={newProximityThreshold}
+            onValueChange={setNewProximityThreshold}
+          />
+          <Button
+            title="Confirm"
+            color="#017E5E"
+            onPress={updateProximityThreshold}
+          />
+          <Button title="Close" color="#017E5E" onPress={closeThreshold} />
+        </View>
+      </Modal>
+
+      <View style={styles.searchBoxContainer}>
+        <View style={styles.searchBox}>
+          <TextInput
+            placeholder="Search here"
+            placeholderTextColor="#000"
+            autoCapitalize="none"
+            style={{flex: 1, padding: 0}}
+          />
+          <Image source={require('../assets/newsfeed/search.png')} />
+        </View>
       </View>
+      <TouchableOpacity style={styles.radarButton} onPress={openThreshold}>
+        <Image
+          style={styles.radarIcon}
+          source={require('../assets/radar.png')}
+        />
+      </TouchableOpacity>
 
       <ScrollView
         horizontal
@@ -622,7 +751,7 @@ const MapScreen = ({navigation}: Props) => {
         pagingEnabled
         scrollEventThrottle={1}
         showsHorizontalScrollIndicator={false}
-        snapToInterval={CARD_WIDTH + 20}
+        snapToInterval={CARD_WIDTH + 25}
         snapToAlignment="center"
         style={styles.scrollView}
         contentInset={{
@@ -640,43 +769,33 @@ const MapScreen = ({navigation}: Props) => {
             event.nativeEvent.contentOffset &&
             typeof event.nativeEvent.contentOffset.x === 'number'
           ) {
-            calculateCurrentPinIndex(event.nativeEvent.contentOffset.x);
-            const pin = pins[currentPinIndex];
-            if (pin && _map.current) {
-              const {latitude, longitude} = pin;
-              (_map.current as MapView).animateToRegion(
-                {
-                  latitude,
-                  longitude,
-                  latitudeDelta: 0.005,
-                  longitudeDelta: 0.005,
-                },
-                350,
-              );
-            }
+            const xOffset = event.nativeEvent.contentOffset.x;
+            calculateCurrentPinIndex(xOffset);
           }
         }}>
-        {pins &&
-          pins.map((pins: any) => (
+        <FlatList
+          horizontal
+          data={nearbypin}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({item}) => (
             <View style={styles.card}>
               <Image
-                source={{uri: pins.image.url}}
+                source={{uri: item.image.url}}
                 style={styles.cardImage}
                 resizeMode="cover"
               />
               <View style={styles.textContent}>
                 <Text numberOfLines={1} style={styles.cardtitle}>
-                  {pins.businessName}
+                  {item.businessName}
                 </Text>
                 <StarRating ratings={4} reviews={99} />
                 <Text numberOfLines={1} style={styles.cardDescription}>
-                  {pins.description}
+                  {item.description}
                 </Text>
-
                 <View style={styles.cardButtons}>
                   <View style={styles.button}>
                     <TouchableOpacity
-                      onPress={() => handleVisitButtonPress(pins)}
+                      onPress={() => handleVisitButtonPress(item)}
                       style={[
                         styles.signIn,
                         {
@@ -695,34 +814,11 @@ const MapScreen = ({navigation}: Props) => {
                       </Text>
                     </TouchableOpacity>
                   </View>
-
-                  {/* <View style={styles.button}>
-                    {isCurrentUserPin(pins.CreatedBy, user._Id) && (
-                      <TouchableOpacity
-                        onPress={() => setOpenModal(true)}
-                        style={[
-                          styles.signIn,
-                          {
-                            borderColor: '#e24848',
-                            borderWidth: 1,
-                          },
-                        ]}>
-                        <Text
-                          style={[
-                            styles.textSign,
-                            {
-                              color: '#e24848',
-                            },
-                          ]}>
-                          Delete
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View> */}
                 </View>
               </View>
             </View>
-          ))}
+          )}
+        />
       </Animated.ScrollView>
 
       {openModal && (
@@ -843,6 +939,35 @@ const MapScreen = ({navigation}: Props) => {
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: '#F1FFF8',
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  thresholdButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ccc',
+    borderRadius: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    marginRight: 10,
+    marginBottom: 10,
+  },
+  activeButton: {
+    backgroundColor: '#017E5E',
+    color: '#fff',
+  },
   searchBox: {
     position: 'absolute',
     marginTop: Platform.OS === 'ios' ? 40 : 20,
@@ -858,6 +983,33 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 10,
   },
+  searchBoxContainer: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 40 : 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: 5,
+    padding: 10,
+    shadowColor: '#ccc',
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.5,
+    shadowRadius: 5,
+    elevation: 10,
+  },
+  radarButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 40 : 10,
+    right: 10,
+  },
+  radarIcon: {
+    height: 40,
+    width: 40,
+  },
+
   cardButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1011,5 +1163,16 @@ const styles = StyleSheet.create({
 export default MapScreen;
 
 function setWatchID(arg0: number) {
+  throw new Error('Function not implemented.');
+}
+function animateToRegion(
+  arg0: {
+    latitude: any;
+    longitude: any;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  },
+  arg1: number,
+) {
   throw new Error('Function not implemented.');
 }
