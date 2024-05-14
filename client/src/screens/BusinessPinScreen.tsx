@@ -164,9 +164,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: MIN_HEIGHT,
-    justifyContent: 'center', // Center children vertically
+    justifyContent: 'center',
     paddingTop: Platform.OS === 'ios' ? 40 : 5,
-    backgroundColor: 'transparent', // Remove background color
+    backgroundColor: 'transparent',
   },
   gradient: {
     position: 'absolute',
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     height: 70,
   },
   navTitle: {
-    color: 'white', // Text color
+    color: 'white',
     fontSize: 28,
     backgroundColor: 'transparent',
     paddingLeft: 20,

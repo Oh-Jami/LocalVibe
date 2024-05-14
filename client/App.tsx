@@ -14,7 +14,6 @@ LogBox.ignoreAllLogs();
 function App() {
   return (
     <Provider store={Store}>
-      {/* <LocationTracking /> */}
       <AppStack />
     </Provider>
   );

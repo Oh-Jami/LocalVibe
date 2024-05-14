@@ -98,7 +98,7 @@ const PostCard = ({item, isReply, navigation, postId, replies}: Props) => {
           <View className="flex-row w-[85%] items-center">
             <TouchableOpacity onPress={() => profileHandler(item.user)}>
               <Image
-                source={{uri: userInfo?.avatar?.url}}
+                source={{uri: item?.user?.avatar?.url}}
                 width={40}
                 height={40}
                 borderRadius={100}
@@ -109,9 +109,9 @@ const PostCard = ({item, isReply, navigation, postId, replies}: Props) => {
                 className="flex-row items-center"
                 onPress={() => profileHandler(userInfo)}>
                 <Text className="text-black font-[500] text-[16px]">
-                  {userInfo?.name}
+                  {item?.user.name}
                 </Text>
-                {userInfo?.role === 'Admin' && (
+                {/* {userInfo?.role === 'Admin' && (
                   <Image
                     source={{
                       uri: 'https://cdn-icons-png.flaticon.com/128/1828/1828640.png',
@@ -120,7 +120,7 @@ const PostCard = ({item, isReply, navigation, postId, replies}: Props) => {
                     height={15}
                     className="ml-1"
                   />
-                )}
+                )} */}
               </TouchableOpacity>
               <Text className="text-black font-[500] text-[13px]">
                 {item.title}

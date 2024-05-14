@@ -13,6 +13,7 @@ import {
   Text,
   TextInput,
   Button,
+  StyleSheet,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useDispatch, useSelector} from 'react-redux';
@@ -25,6 +26,7 @@ import {GeoPosition} from 'react-native-geolocation-service';
 import Lottie from 'lottie-react-native';
 import axios from 'axios';
 import {URI} from '../../redux/URI';
+import Slider from '@react-native-community/slider';
 
 const loader = require('../assets/newsfeed/animation_lkbqh8co.json');
 
@@ -46,6 +48,8 @@ const HomeScreen = ({navigation}: Props) => {
   const [showModal, setShowModal] = useState(false);
   const [newProximityThreshold, setNewProximityThreshold] = useState(5);
 
+  const [showThreshold, setShowThreshold] = useState(false);
+
   const [userLocation, setUserLocation] = useState<GeoPosition | null>(null);
   const [watchID, setWatchID] = useState<number | null>(null);
   const [userData, setUserData] = useState({
@@ -53,18 +57,18 @@ const HomeScreen = ({navigation}: Props) => {
     longitude: user?.longitude,
   });
 
-  const openModal = () => {
-    setShowModal(true);
+  const openThreshold = () => {
+    setShowThreshold(true);
   };
 
-  const closeModal = () => {
-    setShowModal(false);
+  const closeThreshold = () => {
+    setShowThreshold(false);
   };
 
   const updateProximityThreshold = () => {
     const newThreshold = newProximityThreshold;
 
-    const minThreshold = 1;
+    const minThreshold = 0.5;
     const maxThreshold = 10;
 
     if (
@@ -73,8 +77,7 @@ const HomeScreen = ({navigation}: Props) => {
       newThreshold <= maxThreshold
     ) {
       setNewProximityThreshold(newThreshold);
-
-      setShowModal(false);
+      setShowThreshold(false);
     } else {
       alert(
         `Proximity threshold must be between ${minThreshold} and ${maxThreshold}`,
@@ -95,20 +98,14 @@ const HomeScreen = ({navigation}: Props) => {
     setOffsetY(y);
   }
 
-  function onScrollEndDrag(event: any) {
-    const {nativeEvent} = event;
-    const {contentOffset} = nativeEvent;
-    const {y} = contentOffset;
-    setOffsetY(y);
-
-    if (y <= -refreshingHeight && !refreshing) {
-      setRefreshing(true);
-      setTimeout(() => {
-        getAllPosts()(dispatch);
-        setRefreshing(false);
-      }, 3000);
-    }
-  }
+  // function onScrollEndDrag(event: any) {
+  //   setRefreshing(true);
+  //   setTimeout(() => {
+  //     getAllPosts()(dispatch);
+  //     getAllUsers()(dispatch);
+  //     setRefreshing(false);
+  //   }, 1000);
+  // }
 
   useEffect(() => {
     if (Geolocation) {
@@ -280,7 +277,7 @@ const HomeScreen = ({navigation}: Props) => {
             className="rounded-full p-2 mx-2 bg-green-50">
             <Image source={require('../assets/newsfeed/search.png')} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={openModal}>
+          <TouchableOpacity onPress={openThreshold}>
             <Image
               style={{
                 height: 40,
@@ -311,8 +308,6 @@ const HomeScreen = ({navigation}: Props) => {
               renderItem={({item}) => (
                 <PostCard navigation={navigation} item={item} />
               )}
-              onScroll={onScroll}
-              onScrollEndDrag={onScrollEndDrag}
               refreshControl={
                 <RefreshControl
                   refreshing={refreshing}
@@ -329,46 +324,47 @@ const HomeScreen = ({navigation}: Props) => {
       <Modal
         animationType="slide"
         transparent={true}
-        visible={showModal}
-        onRequestClose={closeModal}>
-        <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-          <View
-            style={{
-              backgroundColor: '#F1FFF8',
-              padding: 20,
-              borderRadius: 10,
-              shadowColor: '#000',
-              shadowOffset: {width: 0, height: 2},
-              shadowOpacity: 0.25,
-              shadowRadius: 3.84,
-              elevation: 5,
-            }}>
-            <Text>Enter new proximity threshold in km:</Text>
-            <TextInput
-              style={{
-                height: 40,
-                borderColor: 'gray',
-                borderWidth: 1,
-                marginBottom: 10,
-              }}
-              keyboardType="numeric"
-              onChangeText={text => setNewProximityThreshold(text)}
-              value={newProximityThreshold}
-            />
-            <Text style={{color: 'gray', marginBottom: 10}}>
-              (e.g., 1 for very close, 5 for close, 10 for moderate, etc.)
-            </Text>
-            <Button
-              title="Close"
-              color="#017E5E"
-              onPress={updateProximityThreshold}
-            />
-          </View>
+        visible={showThreshold}
+        onRequestClose={closeThreshold}>
+        <View style={styles.modalContainer}>
+          <Text>
+            Adjust proximity threshold (in km):{' '}
+            {newProximityThreshold.toFixed(2)} km
+          </Text>
+          <Slider
+            style={{width: '100%', marginTop: 10}}
+            minimumValue={0.5}
+            maximumValue={10}
+            minimumTrackTintColor="#017E5E"
+            maximumTrackTintColor="#ccc"
+            thumbTintColor="#017E5E"
+            value={newProximityThreshold}
+            onValueChange={setNewProximityThreshold}
+          />
+          <Button
+            title="Confirm"
+            color="#017E5E"
+            onPress={updateProximityThreshold}
+          />
+          <Button title="Close" color="#017E5E" onPress={closeThreshold} />
         </View>
       </Modal>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    backgroundColor: '#F1FFF8',
+    padding: 20,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+});
 
 export default HomeScreen;
 function setWatchID(arg0: any) {
