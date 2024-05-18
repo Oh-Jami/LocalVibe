@@ -5,7 +5,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // register user
 export const registerUser =
-  (name: string, email: string, password: string, avatar: string) =>
+  (
+    name: string,
+    email: string,
+    password: string,
+    avatar: string,
+    accountType: string,
+  ) =>
   async (dispatch: Dispatch<any>) => {
     try {
       dispatch({
@@ -15,7 +21,7 @@ export const registerUser =
       const config = {headers: {'Content-Type': 'application/json'}};
       const {data} = await axios.post(
         `${URI}/registration`,
-        {name, email, password, avatar},
+        {name, email, password, avatar, accountType},
         config,
       );
       dispatch({

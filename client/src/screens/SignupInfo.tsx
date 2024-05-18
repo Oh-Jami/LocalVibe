@@ -56,7 +56,7 @@ const SignupScreen = ({navigation, route}: Props) => {
   const submitHandler = async (e: any) => {
     try {
       Alert.alert('Registration Successful!');
-      await registerUser(name, email, password, avatar)(dispatch);
+      await registerUser(name, email, password, avatar, accountType)(dispatch);
     } catch (error) {
       // Handle the error here
       console.error('An error occurred:', error);
@@ -148,8 +148,8 @@ const SignupScreen = ({navigation, route}: Props) => {
                   selectedValue={accountType}
                   onValueChange={itemValue => setAccountType(itemValue)}
                   style={{flex: 1, fontSize: 16}}>
-                  <Picker.Item label="Personal" value="Personal" />
-                  <Picker.Item label="Business" value="Business" />
+                  <Picker.Item label="Personal" value="personal" />
+                  <Picker.Item label="Business" value="business" />
                 </Picker>
               </View>
             </View>
