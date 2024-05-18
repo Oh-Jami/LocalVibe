@@ -8,10 +8,8 @@ import {
   Animated,
   Easing,
   RefreshControl,
-  Platform,
   Modal,
   Text,
-  TextInput,
   Button,
   StyleSheet,
 } from 'react-native';
@@ -22,7 +20,6 @@ import PostCard from '../components/PostCard';
 import Loader from '../common/Loader';
 import {getAllUsers, loadUser} from '../../redux/actions/userAction';
 import Geolocation from '@react-native-community/geolocation';
-import {GeoPosition} from 'react-native-geolocation-service';
 import Lottie from 'lottie-react-native';
 import axios from 'axios';
 import {URI} from '../../redux/URI';
@@ -35,7 +32,7 @@ type Props = {
 };
 
 const HomeScreen = ({navigation}: Props) => {
-  const {users, user, token} = useSelector((state: any) => state.user);
+  const {user, token} = useSelector((state: any) => state.user);
   const {posts, isLoading} = useSelector((state: any) => state.post);
   const dispatch = useDispatch();
   const [offsetY, setOffsetY] = useState(0);
@@ -50,8 +47,7 @@ const HomeScreen = ({navigation}: Props) => {
 
   const [showThreshold, setShowThreshold] = useState(false);
 
-  const [userLocation, setUserLocation] = useState<GeoPosition | null>(null);
-  const [watchID, setWatchID] = useState<number | null>(null);
+  const [userLocation, setUserLocation] = useState(null);
   const [userData, setUserData] = useState({
     latitude: user?.latitude,
     longitude: user?.longitude,
@@ -66,17 +62,15 @@ const HomeScreen = ({navigation}: Props) => {
   };
 
   const updateProximityThreshold = () => {
-    const newThreshold = newProximityThreshold;
-
     const minThreshold = 0.5;
     const maxThreshold = 10;
 
     if (
-      !isNaN(newThreshold) &&
-      newThreshold >= minThreshold &&
-      newThreshold <= maxThreshold
+      !isNaN(newProximityThreshold) &&
+      newProximityThreshold >= minThreshold &&
+      newProximityThreshold <= maxThreshold
     ) {
-      setNewProximityThreshold(newThreshold);
+      setNewProximityThreshold(newProximityThreshold);
       setShowThreshold(false);
     } else {
       alert(
@@ -98,26 +92,17 @@ const HomeScreen = ({navigation}: Props) => {
     setOffsetY(y);
   }
 
-  // function onScrollEndDrag(event: any) {
-  //   setRefreshing(true);
-  //   setTimeout(() => {
-  //     getAllPosts()(dispatch);
-  //     getAllUsers()(dispatch);
-  //     setRefreshing(false);
-  //   }, 1000);
-  // }
-
   useEffect(() => {
     if (Geolocation) {
       const success = (geoPosition: {
         coords: {
-          latitude: any;
-          longitude: any;
-          accuracy: any;
-          altitude: any;
-          altitudeAccuracy: any;
-          heading: any;
-          speed: any;
+          latitude: number;
+          longitude: number;
+          accuracy: number;
+          altitude: number;
+          altitudeAccuracy: number;
+          heading: number;
+          speed: number;
         };
       }) => {
         setUserLocation({
@@ -128,7 +113,7 @@ const HomeScreen = ({navigation}: Props) => {
           altitudeAccuracy: geoPosition.coords.altitudeAccuracy,
           heading: geoPosition.coords.heading,
           speed: geoPosition.coords.speed,
-        } as unknown as GeoPosition);
+        });
 
         setUserData({
           latitude: geoPosition.coords.latitude,
@@ -146,20 +131,11 @@ const HomeScreen = ({navigation}: Props) => {
         maximumAge: 10000,
       };
 
-      setWatchID(Geolocation.watchPosition(success, error, options));
+      const watchId = Geolocation.watchPosition(success, error, options);
+      return () => Geolocation.clearWatch(watchId);
     } else {
       console.error('Geolocation is not available.');
     }
-
-    return () => {
-      if (watchID) {
-        Geolocation.clearWatch(watchID);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    console.log('OutsideUpdated userData:', userData);
   }, []);
 
   useEffect(() => {
@@ -191,17 +167,70 @@ const HomeScreen = ({navigation}: Props) => {
     setSlice(s);
   }
 
-  const nearbyPosts = posts
-    .filter((post: {user: {latitude: number; longitude: number}}) => {
-      const distance = haversine(
-        userData.latitude,
-        userData.longitude,
-        post.user.latitude,
-        post.user.longitude,
-      );
-      return distance <= newProximityThreshold;
-    })
-    .slice(0, slice);
+  interface Post {
+    id: number;
+    user: {
+      latitude: number;
+      longitude: number;
+      accountType: string;
+    };
+  }
+
+  const filterAndFormatPosts = () => {
+    const filteredPosts = posts
+      .filter((post: Post) => {
+        const distance = haversine(
+          userData.latitude,
+          userData.longitude,
+          post.user.latitude,
+          post.user.longitude,
+        );
+        return distance <= newProximityThreshold;
+      })
+      .slice(0, slice);
+
+    const businessPosts = filteredPosts.filter(
+      (post: Post) => post.user.accountType === 'business',
+    );
+
+    console.log('Business Posts:', businessPosts);
+
+    const premiumBusinessPosts = businessPosts.filter(
+      (post: Post) => post.user.accountType === 'prembusiness',
+    );
+    const regularBusinessPosts = businessPosts.filter(
+      (post: Post) => post.user.accountType === 'business',
+    );
+
+    const personalPosts = filteredPosts.filter(
+      (post: Post) => post.user.accountType === 'personal',
+    );
+    console.log('Personal Posts:', personalPosts);
+
+    let formattedPosts = [];
+    formattedPosts.push(...premiumBusinessPosts);
+    let businessIndex = 0;
+    let personalIndex = 0;
+
+    while (
+      businessIndex < regularBusinessPosts.length ||
+      personalIndex < personalPosts.length
+    ) {
+      // Add regular business posts
+      if (businessIndex < regularBusinessPosts.length) {
+        formattedPosts.push(regularBusinessPosts[businessIndex]);
+        businessIndex++;
+      }
+      // Add up to 5 personal posts
+      for (let i = 0; i < 5 && personalIndex < personalPosts.length; i++) {
+        formattedPosts.push(personalPosts[personalIndex]);
+        personalIndex++;
+      }
+    }
+    return formattedPosts;
+  };
+
+  const nearbyPosts = filterAndFormatPosts();
 
   function haversine(lat1: number, lon1: number, lat2: number, lon2: number) {
     const R = 6371;
@@ -230,7 +259,7 @@ const HomeScreen = ({navigation}: Props) => {
   };
 
   const submitLocation = async () => {
-    console.log('submiting coor');
+    console.log('Submitting coordinates');
     try {
       await axios.put(
         `${URI}/update-coor`,
@@ -247,14 +276,13 @@ const HomeScreen = ({navigation}: Props) => {
       loadUser()(dispatch);
     } catch (error) {
       if (error.response && error.response.status === 401) {
-        // Handle 401 unauthorized error, e.g., redirect to login screen
         console.error('Unauthorized: Please log in again');
       } else {
-        // Handle other errors
         console.error('An error occurred:', error.message);
       }
     }
   };
+  console.log('Nearby Posts:', nearbyPosts);
 
   return (
     <SafeAreaView className="flex-1 bg-green-50 mb-[27%]">
@@ -368,6 +396,3 @@ const styles = StyleSheet.create({
 });
 
 export default HomeScreen;
-function setWatchID(arg0: any) {
-  throw new Error('Function not implemented.');
-}

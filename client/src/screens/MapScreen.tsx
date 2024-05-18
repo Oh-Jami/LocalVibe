@@ -65,6 +65,7 @@ const MapScreen = ({navigation}: Props) => {
     longitude: user?.longitude,
   });
   const [isAddingPin, setIsAddingPin] = useState(false);
+  const [selectedPin, setSelectedPin] = useState('');
   const [isAddingForm, setIsAddingForm] = useState(false);
   const [markerCoords, setMarkerCoords] = useState({
     latitude: user?.latitude,
@@ -162,6 +163,7 @@ const MapScreen = ({navigation}: Props) => {
       .then(res => {
         getAllPins()(dispatch);
       });
+    setOpenModal(false);
   };
 
   const initialMapState = {
@@ -564,7 +566,7 @@ const MapScreen = ({navigation}: Props) => {
 
     if (_scrollView.current) {
       _scrollView.current.scrollTo({
-        x: index * (CARD_WIDTH + 20),
+        x: index * (CARD_WIDTH + 19),
         animated: true,
       });
     }
@@ -635,8 +637,6 @@ const MapScreen = ({navigation}: Props) => {
                   </View>
                   <Text style={styles.name}>{user?.name}</Text>
                 </View>
-                <View style={styles.arrowBorder} />
-                <View style={styles.arrow} />
               </View>
             </Callout>
           </Marker>
@@ -756,7 +756,7 @@ const MapScreen = ({navigation}: Props) => {
         style={styles.scrollView}
         contentInset={{
           top: 0,
-          left: SPACING_FOR_CARD_INSET,
+          left: SPACING_FOR_CARD_INSET + 1,
           bottom: 0,
           right: SPACING_FOR_CARD_INSET,
         }}
@@ -813,6 +813,31 @@ const MapScreen = ({navigation}: Props) => {
                         Visit
                       </Text>
                     </TouchableOpacity>
+
+                    {item.createdBy === user._id && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          setOpenModal(true);
+                          setSelectedPin(item);
+                        }}
+                        style={[
+                          styles.signIn,
+                          {
+                            borderColor: '#Ff0000',
+                            borderWidth: 1,
+                          },
+                        ]}>
+                        <Text
+                          style={[
+                            styles.textSign,
+                            {
+                              color: '#Ff0000',
+                            },
+                          ]}>
+                          Delete
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               </View>
@@ -836,7 +861,7 @@ const MapScreen = ({navigation}: Props) => {
                   <View className="w-full bg-[#fff] h-[120] rounded-[20px] p-[20px] items-center shadow-[#000] shadow-inner">
                     <TouchableOpacity
                       className="w-full bg-[#00000010] h-[50px] rounded-[10px] items-center flex-row pl-5"
-                      onPress={() => deletePinHandler(pins._id)}>
+                      onPress={() => deletePinHandler(selectedPin._id)}>
                       <Text className="text-[18px] font-[600] text-[#e24848]">
                         Delete
                       </Text>
@@ -849,7 +874,7 @@ const MapScreen = ({navigation}: Props) => {
         </View>
       )}
 
-      {!isAddingPin && (
+      {!isAddingPin && user.accountType === 'business' && (
         <TouchableOpacity style={styles.addButton} onPress={handleAddPin}>
           <Image source={require('../assets/maps/addPin.png')} />
         </TouchableOpacity>
@@ -1010,10 +1035,6 @@ const styles = StyleSheet.create({
     width: 40,
   },
 
-  cardButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   chipsIcon: {
     marginRight: 5,
   },
@@ -1098,7 +1119,13 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     bottom: 10,
   },
+  cardButtons: {
+    padding: 10,
+    width: '100%',
+  },
   button: {
+    justifyContent: 'space-between',
+    flexDirection: 'row',
     marginBottom: 10,
     width: 100,
   },

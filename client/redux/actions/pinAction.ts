@@ -82,6 +82,8 @@ export const getAllPins = () => async (dispatch: Dispatch<any>) => {
 
 export const deletePinAction =
   (pinId: string) => async (dispatch: Dispatch<any>) => {
+    console.log('trying to delete pin');
+
     try {
       dispatch({
         type: 'pinDeleteRequest',

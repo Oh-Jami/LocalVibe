@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema(
     },
     accountType: {
       type: String,
-      enum: ["admin", "personal", "business"],
+      enum: ["admin", "personal", "business", "prembusiness"],
       default: "personal",
       required: [true, "Please specify the account type"],
     },

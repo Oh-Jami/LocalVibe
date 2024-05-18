@@ -102,6 +102,7 @@ exports.updatePinById = catchAsyncErrors(async (req, res, next) => {
 
 // Delete pin by ID
 exports.deletePinById = catchAsyncErrors(async (req, res, next) => {
+  console.log("trying to delete pin");
   try {
     const pin = await Pin.findById(req.params.id);
     if (!pin) {
