@@ -140,6 +140,19 @@ const ProfileScreen = ({navigation}: Props) => {
               </Text>
             </TouchableOpacity>
 
+            <TouchableOpacity
+              onPress={() => navigation.navigate('PremiumScreen')}>
+              <Text
+                className="w-[100] pt-1 text-center h-[30px] text-[#000]"
+                style={{
+                  borderColor: '#666',
+                  borderWidth: 1,
+                  backgroundColor: '#8DECB4',
+                }}>
+                Premium
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity className="mt-5" onPress={logoutHandler}>
               <Text
                 className="w-[100] pt-1 text-center h-[30px] text-[#fff]"

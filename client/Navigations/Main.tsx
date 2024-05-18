@@ -13,6 +13,7 @@ import PostLikeCard from '../src/components/PostLikeCard';
 import FollowerCard from '../src/components/FollowerCard';
 import EditProfile from '../src/components/EditProfile';
 import BusinessPinScreen from '../src/screens/BusinessPinScreen';
+import PremiumScreen from '../src/screens/PremiumScreen';
 
 type Props = {};
 
@@ -57,6 +58,7 @@ const Main = (props: Props) => {
         <Stack.Screen name="PostLikeCard" component={PostLikeCard} />
         <Stack.Screen name="FollowerCard" component={FollowerCard} />
         <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="PremiumScreen" component={PremiumScreen} />
       </Stack.Navigator>
     );
   } else {
@@ -77,6 +79,7 @@ const Main = (props: Props) => {
         <Stack.Screen name="PostLikeCard" component={PostLikeCard} />
         <Stack.Screen name="FollowerCard" component={FollowerCard} />
         <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="PremiumScreen" component={PremiumScreen} />
       </Stack.Navigator>
     );
   }

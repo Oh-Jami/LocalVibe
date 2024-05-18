@@ -138,6 +138,8 @@ const HomeScreen = ({navigation}: Props) => {
     }
   }, []);
 
+  console.log(userData);
+
   useEffect(() => {
     getAllPosts()(dispatch);
     getAllUsers()(dispatch);
@@ -189,23 +191,17 @@ const HomeScreen = ({navigation}: Props) => {
       })
       .slice(0, slice);
 
-    const businessPosts = filteredPosts.filter(
-      (post: Post) => post.user.accountType === 'business',
-    );
-
-    console.log('Business Posts:', businessPosts);
-
-    const premiumBusinessPosts = businessPosts.filter(
+    const premiumBusinessPosts = filteredPosts.filter(
       (post: Post) => post.user.accountType === 'prembusiness',
     );
-    const regularBusinessPosts = businessPosts.filter(
+
+    const regularBusinessPosts = filteredPosts.filter(
       (post: Post) => post.user.accountType === 'business',
     );
 
     const personalPosts = filteredPosts.filter(
       (post: Post) => post.user.accountType === 'personal',
     );
-    console.log('Personal Posts:', personalPosts);
 
     let formattedPosts = [];
     formattedPosts.push(...premiumBusinessPosts);
@@ -216,13 +212,11 @@ const HomeScreen = ({navigation}: Props) => {
       businessIndex < regularBusinessPosts.length ||
       personalIndex < personalPosts.length
     ) {
-      // Add regular business posts
       if (businessIndex < regularBusinessPosts.length) {
         formattedPosts.push(regularBusinessPosts[businessIndex]);
         businessIndex++;
       }
-      // Add up to 5 personal posts
-      for (let i = 0; i < 5 && personalIndex < personalPosts.length; i++) {
+      for (let i = 0; i < 4 && personalIndex < personalPosts.length; i++) {
         formattedPosts.push(personalPosts[personalIndex]);
         personalIndex++;
       }
@@ -282,7 +276,6 @@ const HomeScreen = ({navigation}: Props) => {
       }
     }
   };
-  console.log('Nearby Posts:', nearbyPosts);
 
   return (
     <SafeAreaView className="flex-1 bg-green-50 mb-[27%]">

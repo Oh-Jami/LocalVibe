@@ -16,7 +16,6 @@ const postSchema = new mongoose.Schema(
     user: {
       type: Object,
     },
-
     likes: [
       {
         name: {
