@@ -203,24 +203,33 @@ const HomeScreen = ({navigation}: Props) => {
       (post: Post) => post.user.accountType === 'personal',
     );
 
-    let formattedPosts = [];
-    formattedPosts.push(...premiumBusinessPosts);
-    let businessIndex = 0;
+    let formattedPosts: Post[] = [];
+    let premiumIndex = 0;
+    let regularIndex = 0;
     let personalIndex = 0;
+    let premiumCounter = 0;
 
     while (
-      businessIndex < regularBusinessPosts.length ||
+      premiumIndex < premiumBusinessPosts.length ||
+      regularIndex < regularBusinessPosts.length ||
       personalIndex < personalPosts.length
     ) {
-      if (businessIndex < regularBusinessPosts.length) {
-        formattedPosts.push(regularBusinessPosts[businessIndex]);
-        businessIndex++;
+      if (premiumCounter < 2 && premiumIndex < premiumBusinessPosts.length) {
+        formattedPosts.push(premiumBusinessPosts[premiumIndex]);
+        premiumIndex++;
+        premiumCounter++;
+      } else if (regularIndex < regularBusinessPosts.length) {
+        formattedPosts.push(regularBusinessPosts[regularIndex]);
+        regularIndex++;
+        premiumCounter = 0;
       }
-      for (let i = 0; i < 4 && personalIndex < personalPosts.length; i++) {
+
+      for (let i = 0; i < 3 && personalIndex < personalPosts.length; i++) {
         formattedPosts.push(personalPosts[personalIndex]);
         personalIndex++;
       }
     }
+
     return formattedPosts;
   };
 
