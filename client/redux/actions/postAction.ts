@@ -122,6 +122,7 @@ export const addLikes =
           },
         },
       );
+      console.log('test');
 
       await axios.put(
         `${URI}/update-likes`,

@@ -10,6 +10,8 @@ const {
   deletePost,
 } = require("../controllers/post");
 
+const { updateInteractions } = require("../controllers/user");
+
 const { isAuthenticatedUser } = require("../middleware/auth");
 
 const router = express.Router();
@@ -32,7 +34,10 @@ router
   .route("/update-reply-react")
   .put(isAuthenticatedUser, updateRepliesReplyLike);
 
-router.route("/delete-post/:id").delete(isAuthenticatedUser, deletePost);
+router
+  .route("/update-interactions")
+  .put(isAuthenticatedUser, updateInteractions);
 
+router.route("/delete-post/:id").delete(isAuthenticatedUser, deletePost);
 
 module.exports = router;
