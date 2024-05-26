@@ -149,6 +149,22 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(userId);
     const post = await Post.findById(postId);
 
+    // Update similarity scores before removing the interaction
+    user.interactions.forEach((interaction) => {
+      const otherUserId = post.userInteractions.find(
+        (inter) => inter.userId.toString() !== userId.toString()
+      );
+
+      const similarUserIndex = user.similarUsers.findIndex(
+        (similarUser) =>
+          similarUser.userId.toString() === otherUserId.toString()
+      );
+
+      if (similarUserIndex !== -1) {
+        user.similarUsers[similarUserIndex].similarityScore -= score;
+      }
+    });
+
     const existingInteractionIndex = user.interactions.findIndex(
       (interaction) => interaction.post_id.toString() === postId
     );
@@ -238,6 +254,20 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     } else {
       post.userInteractions.push({ userId, score: 1 });
     }
+
+    // Update similarity scores after recording the interaction
+    post.userInteractions.forEach((interaction) => {
+      const otherUserId = interaction.userId.toString() !== userId.toString();
+
+      const similarUserIndex = user.similarUsers.findIndex(
+        (similarUser) =>
+          similarUser.userId.toString() === otherUserId.toString()
+      );
+
+      if (similarUserIndex !== -1) {
+        user.similarUsers[similarUserIndex].similarityScore += score;
+      }
+    });
 
     // Save the updated user document
     await user.save();

@@ -179,31 +179,30 @@ const HomeScreen = ({navigation}: Props) => {
   }
 
   const filterAndFormatPosts = () => {
-    const filteredPosts = posts
-      .filter((post: Post) => {
-        const distance = haversine(
-          userData.latitude,
-          userData.longitude,
-          post.user.latitude,
-          post.user.longitude,
-        );
-        return distance <= newProximityThreshold;
-      })
-      .slice(0, slice);
+    const formattedPosts: Post[] = [];
+    const premiumBusinessPosts: Post[] = [];
+    const regularBusinessPosts: Post[] = [];
+    const personalPosts: Post[] = [];
 
-    const premiumBusinessPosts = filteredPosts.filter(
-      (post: Post) => post.user.accountType === 'prembusiness',
-    );
+    for (const post of posts) {
+      const distance = haversine(
+        userData.latitude,
+        userData.longitude,
+        post.user.latitude,
+        post.user.longitude,
+      );
 
-    const regularBusinessPosts = filteredPosts.filter(
-      (post: Post) => post.user.accountType === 'business',
-    );
+      if (distance <= newProximityThreshold) {
+        if (post.user.accountType === 'prembusiness') {
+          premiumBusinessPosts.push(post);
+        } else if (post.user.accountType === 'business') {
+          regularBusinessPosts.push(post);
+        } else {
+          personalPosts.push(post);
+        }
+      }
+    }
 
-    const personalPosts = filteredPosts.filter(
-      (post: Post) => post.user.accountType === 'personal',
-    );
-
-    let formattedPosts: Post[] = [];
     let premiumIndex = 0;
     let regularIndex = 0;
     let personalIndex = 0;
@@ -215,18 +214,15 @@ const HomeScreen = ({navigation}: Props) => {
       personalIndex < personalPosts.length
     ) {
       if (premiumCounter < 2 && premiumIndex < premiumBusinessPosts.length) {
-        formattedPosts.push(premiumBusinessPosts[premiumIndex]);
-        premiumIndex++;
+        formattedPosts.push(premiumBusinessPosts[premiumIndex++]);
         premiumCounter++;
       } else if (regularIndex < regularBusinessPosts.length) {
-        formattedPosts.push(regularBusinessPosts[regularIndex]);
-        regularIndex++;
+        formattedPosts.push(regularBusinessPosts[regularIndex++]);
         premiumCounter = 0;
       }
 
       for (let i = 0; i < 3 && personalIndex < personalPosts.length; i++) {
-        formattedPosts.push(personalPosts[personalIndex]);
-        personalIndex++;
+        formattedPosts.push(personalPosts[personalIndex++]);
       }
     }
 
