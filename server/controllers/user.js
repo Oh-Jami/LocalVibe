@@ -202,16 +202,17 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
+
   try {
     const userId = req.user.id;
     const { postId } = req.body;
 
-    // Find the user and post by ID
+    // Find the user by ID
     const user = await User.findById(userId);
-    const post = await Post.findById(postId);
 
     // Find the interaction by postId
-    let existingInteraction = user.interactions.find(
+    const existingInteraction = user.interactions.find(
       (interaction) => interaction.post_id.toString() === postId
     );
 
@@ -223,31 +224,17 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
       user.interactions.push({ post_id: postId, score: 1 });
     }
 
-    // Update post userInteractions
-    let postInteraction = post.userInteractions.find(
-      (interaction) => interaction.userId.toString() === userId
-    );
-
-    if (postInteraction) {
-      postInteraction.score += 1;
-    } else {
-      post.userInteractions.push({ userId, score: 1 });
-    }
-
-    // Save the updated documents
+    // Save the updated user document
     await user.save();
-    await post.save();
 
     res.status(200).json({
       success: true,
       message: "Interactions updated successfully",
-      interactions: user.interactions,
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
   }
 });
-
 // Follow and unfollow user
 exports.followUnfollowUser = catchAsyncErrors(async (req, res, next) => {
   try {
