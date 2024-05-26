@@ -11,7 +11,7 @@ export const updateInteraction =
       const token = await AsyncStorage.getItem('token');
       const response = await axios.put(
         `${URI}/update-interactions`,
-        {postId, score: 1},
+        {postId},
         {
           headers: {
             Authorization: `Bearer ${token}`,
