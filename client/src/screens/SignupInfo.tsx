@@ -29,7 +29,7 @@ const SignupScreen = ({navigation, route}: Props) => {
 
   const {email = useState(''), password = useState('')} = route.params;
 
-  const [accountType, setAccountType] = useState('Personal');
+  const [accountType, setAccountType] = useState('personal');
 
   const uploadImage = () => {
     ImagePicker.openPicker({

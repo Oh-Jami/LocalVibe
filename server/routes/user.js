@@ -11,6 +11,7 @@ const {
   updateUserAvatar,
   updateUserInfo,
   updateUserCoor,
+  updateInteractions,
 } = require("../controllers/user");
 
 const { isAuthenticatedUser } = require("../middleware/auth");
@@ -38,5 +39,7 @@ router.route("/update-profile").put(isAuthenticatedUser, updateUserInfo);
 router.route("/update-coor").put(isAuthenticatedUser, updateUserCoor);
 
 router.route("/me").get(isAuthenticatedUser, userDetails);
+
+router.put("/update-interactions", isAuthenticatedUser, updateInteractions);
 
 module.exports = router;

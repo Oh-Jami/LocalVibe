@@ -130,6 +130,25 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
+// Update user interactions
+exports.updateInteractions = async (req, res, next) => {
+  try {
+    const { interactions } = req.body;
+
+    // Find the user by ID and update the interactions array
+    const user = await User.findByIdAndUpdate(
+      req.user.id, // Assuming you're using authentication middleware to populate req.user
+      { interactions },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 // Follow and unfollow user
 exports.followUnfollowUser = catchAsyncErrors(async (req, res, next) => {
   try {

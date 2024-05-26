@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const ObjectId = require("mongodb").ObjectId;
 
 const userSchema = new mongoose.Schema(
   {
@@ -18,6 +17,7 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Please enter your email"],
+      unique: true,
     },
     accountType: {
       type: String,
@@ -47,24 +47,32 @@ const userSchema = new mongoose.Schema(
         required: [true, "Please upload one profile picture!"],
       },
     },
-    friends: [
-      {
-        userId: {
-          type: String,
-        },
-      },
-    ],
     followers: [
       {
         userId: {
-          type: String,
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
         },
       },
     ],
     following: [
       {
         userId: {
-          type: String,
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+      },
+    ],
+    interactions: [
+      {
+        post_id: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Post",
+          required: true,
+        },
+        score: {
+          type: Number,
+          default: 0,
         },
       },
     ],

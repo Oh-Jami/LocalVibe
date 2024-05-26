@@ -105,6 +105,32 @@ export const addLikes =
         payload: updatedPosts,
       });
 
+      // Fetch the user's data to get the current interactions
+      const {data: userData} = await axios.get(`${URI}/user/${user._id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Update the interactions array by finding the interaction object corresponding to the postId
+      const updatedInteractions = userData.interactions.map(
+        (interaction: any) =>
+          interaction.post_id === postId
+            ? {...interaction, score: interaction.score + 1}
+            : interaction,
+      );
+
+      // Send the updated user interactions to the backend
+      await axios.put(
+        `${URI}/update-interactions`,
+        {interactions: updatedInteractions},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
       await axios.put(
         `${URI}/update-likes`,
         {postId},
