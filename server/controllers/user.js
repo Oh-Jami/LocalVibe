@@ -131,11 +131,10 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
-  console.log("test");
-
   try {
     const userId = req.user.id;
     const { postId } = req.body;
+    console.log("remove");
 
     // Find the user by ID
     const user = await User.findById(userId);
@@ -179,11 +178,10 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
-  console.log("test");
-
   try {
     const userId = req.user.id;
     const { postId } = req.body;
+    console.log("test");
 
     // Find the user by ID
     const user = await User.findById(userId);
@@ -195,7 +193,8 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
 
     // If the post ID already exists in the user's interactions array, update the score
     if (existingInteraction) {
-      existingInteraction.score + 1;
+      existingInteraction.score += 1;
+      console.log("added 1");
     } else {
       // If the post ID doesn't exist, add a new interaction object
       user.interactions.push({ post_id: postId, score: 1 });
