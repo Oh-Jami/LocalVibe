@@ -129,26 +129,32 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
-
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
+
   try {
     const userId = req.user.id;
     const { postId } = req.body;
-    console.log("remove");
 
     // Find the user by ID
     const user = await User.findById(userId);
 
     // Find the interaction by postId
-    const existingInteraction = user.interactions.find(
+    const existingInteractionIndex = user.interactions.findIndex(
       (interaction) => interaction.post_id.toString() === postId
     );
 
-    // If the post ID already exists in the user's interactions array, update the score
-    if (existingInteraction) {
+    if (existingInteractionIndex !== -1) {
+      const existingInteraction = user.interactions[existingInteractionIndex];
+
       // Decrement the score
       if (existingInteraction.score > 0) {
         existingInteraction.score -= 1;
+
+        // Remove the interaction if the score reaches zero
+        if (existingInteraction.score === 0) {
+          user.interactions.splice(existingInteractionIndex, 1);
+        }
       } else {
         // Handle case where score is already zero or less
         return res.status(400).json({
@@ -169,7 +175,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      message: "Interaction score decremented successfully",
+      message: "Interaction updated successfully",
       interactions: user.interactions,
     });
   } catch (error) {
@@ -178,10 +184,11 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
+
   try {
     const userId = req.user.id;
     const { postId } = req.body;
-    console.log("test");
 
     // Find the user by ID
     const user = await User.findById(userId);
@@ -194,7 +201,6 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     // If the post ID already exists in the user's interactions array, update the score
     if (existingInteraction) {
       existingInteraction.score += 1;
-      console.log("added 1");
     } else {
       // If the post ID doesn't exist, add a new interaction object
       user.interactions.push({ post_id: postId, score: 1 });
