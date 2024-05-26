@@ -258,14 +258,14 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     // Update similarity scores after recording the interaction
     post.userInteractions.forEach((interaction) => {
       const otherUserId = interaction.userId.toString() !== userId.toString();
-
+      console.log("userinteraction", otherUserId);
       const similarUserIndex = user.similarUsers.findIndex(
         (similarUser) =>
           similarUser.userId.toString() === otherUserId.toString()
       );
 
       if (similarUserIndex !== -1) {
-        user.similarUsers[similarUserIndex].similarityScore += score;
+        user.similarUsers[similarUserIndex].similarityScore += 1;
       }
     });
 
