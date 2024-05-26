@@ -200,11 +200,11 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     return next(new ErrorHandler(error.message, 400));
   }
 });
-
 exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
   try {
+    console.log("Received data from client:", req.body); // Logging the request body received from the client
     const userId = req.user.id;
-    const { postId } = req.body;
+    const { postId, score } = req.body;
 
     // Find the user and post by ID
     const user = await User.findById(userId);
@@ -244,6 +244,7 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
       interactions: user.interactions,
     });
   } catch (error) {
+    console.error("Error updating interactions:", error); // Logging the error
     return next(new ErrorHandler(error.message, 400));
   }
 });

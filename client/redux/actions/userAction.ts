@@ -9,9 +9,16 @@ export const updateInteraction =
     try {
       // Send the updated user interactions to the backend
       const token = await AsyncStorage.getItem('token');
+      console.log('Sending data to server:', {
+        postId,
+        score: user.interactions.length > 0 ? user.interactions[0].score : 0,
+      });
       const response = await axios.put(
         `${URI}/update-interactions`,
-        {postId},
+        {
+          postId,
+          score: user.interactions.length > 0 ? user.interactions[0].score : 0,
+        },
         {
           headers: {
             Authorization: `Bearer ${token}`,
