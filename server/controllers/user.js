@@ -131,13 +131,14 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
 });
 
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
+
   try {
     const userId = req.user.id;
     const { postId } = req.body;
 
-    // Find the user and post by ID
+    // Find the user by ID
     const user = await User.findById(userId);
-    const post = await Post.findById(postId);
 
     // Find the interaction by postId
     const existingInteractionIndex = user.interactions.findIndex(
@@ -156,44 +157,26 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
           user.interactions.splice(existingInteractionIndex, 1);
         }
       } else {
+        // Handle case where score is already zero or less
         return res.status(400).json({
           success: false,
           message: "Score cannot be less than zero",
         });
       }
     } else {
+      // If the post ID doesn't exist, return an error response
       return res.status(404).json({
         success: false,
         message: "Interaction not found",
       });
     }
 
-    // Update post userInteractions
-    const postInteractionIndex = post.userInteractions.findIndex(
-      (interaction) => interaction.userId.toString() === userId
-    );
-
-    if (postInteractionIndex !== -1) {
-      const postInteraction = post.userInteractions[postInteractionIndex];
-
-      // Decrement the score
-      if (postInteraction.score > 0) {
-        postInteraction.score -= 1;
-
-        // Remove the interaction if the score reaches zero
-        if (postInteraction.score === 0) {
-          post.userInteractions.splice(postInteractionIndex, 1);
-        }
-      }
-    }
-
-    // Save the updated documents
+    // Save the updated user document
     await user.save();
-    await post.save();
 
     res.status(200).json({
       success: true,
-      message: "Interaction removed successfully",
+      message: "Interaction updated successfully",
       interactions: user.interactions,
     });
   } catch (error) {
