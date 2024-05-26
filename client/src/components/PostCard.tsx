@@ -17,6 +17,10 @@ import {
 import axios from 'axios';
 import {URI} from '../../redux/URI';
 import PostDetailsCard from './PostDetailsCard';
+import {
+  removeInteraction,
+  updateInteraction,
+} from '../../redux/actions/userAction';
 
 type Props = {
   navigation: any;
@@ -61,11 +65,14 @@ const PostCard = ({item, isReply, navigation, postId, replies}: Props) => {
       const isLikedBefore = item.likes.find((i: any) => i.userId === user._id);
       if (isLikedBefore) {
         removeLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+        removeInteraction(e._id, user)(dispatch);
       } else {
         addLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+        updateInteraction(e._id, user)(dispatch);
       }
     } else {
       addLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+      updateInteraction(e._id, user)(dispatch);
     }
   };
 

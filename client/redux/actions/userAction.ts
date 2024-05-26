@@ -3,6 +3,80 @@ import {URI} from '../URI';
 import {Dispatch} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export const updateInteraction =
+  (postId: string, user: any) =>
+  async (dispatch: (arg0: {type: string; payload: any}) => void) => {
+    try {
+      // Send the updated user interactions to the backend
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.put(
+        `${URI}/update-interactions`,
+        {postId, score: 1},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      // Handle the response from the server
+      if (response.data.success) {
+        // If interactions were successfully updated on the server, you can optionally dispatch another action or update the state as needed
+        console.log('Interactions updated successfully');
+        dispatch({
+          type: 'updateInteractionsSuccess',
+          payload: response.data.updatedInteractions, // Assuming the server sends back the updated interactions
+        });
+      } else {
+        // Handle any potential errors or edge cases
+        console.error('Failed to update interactions:', response.data.message);
+      }
+    } catch (error) {
+      console.log(error, 'errorrrrrr');
+      // Handle any errors that occur during the update process
+    }
+  };
+export const removeInteraction =
+  (postId: string, user: any) =>
+  async (dispatch: (arg0: {type: string; payload: any}) => void) => {
+    try {
+      console.log('removeInteraction');
+
+      // Find the interaction corresponding to the postId
+      const interaction = user.interactions.find(
+        (interaction: any) => interaction.post_id === postId,
+      );
+
+      // Send the updated user interactions to the backend
+      const token = await AsyncStorage.getItem('token');
+      const response = await axios.put(
+        `${URI}/remove-interactions`,
+        {postId, score: interaction.score},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      // Handle the response from the server
+      if (response.data.success) {
+        // If interactions were successfully updated on the server, you can optionally dispatch another action or update the state as needed
+        console.log('Interactions removed successfully');
+        dispatch({
+          type: 'removeInteractionsSuccess',
+          payload: response.data.updatedInteractions, // Assuming the server sends back the updated interactions
+        });
+      } else {
+        // Handle any potential errors or edge cases
+        console.error('Failed to remove interactions:', response.data.message);
+      }
+    } catch (error) {
+      console.log(error, 'errorrrrrr');
+      // Handle any errors that occur during the update process
+    }
+  };
+
 // register user
 export const registerUser =
   (

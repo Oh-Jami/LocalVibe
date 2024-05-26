@@ -130,28 +130,75 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
   });
 });
 
-// Update user interactions
-exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
+exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
   console.log("test");
 
   try {
     const userId = req.user.id;
-    const { postId, score } = req.body;
+    const { postId } = req.body;
 
     // Find the user by ID
     const user = await User.findById(userId);
 
-    // Check if the user's interactions array already contains the given post ID
+    // Find the interaction by postId
     const existingInteraction = user.interactions.find(
       (interaction) => interaction.post_id.toString() === postId
     );
 
     // If the post ID already exists in the user's interactions array, update the score
     if (existingInteraction) {
-      existingInteraction.score += score;
+      // Decrement the score
+      if (existingInteraction.score > 0) {
+        existingInteraction.score -= 1;
+      } else {
+        // Handle case where score is already zero or less
+        return res.status(400).json({
+          success: false,
+          message: "Score cannot be less than zero",
+        });
+      }
+    } else {
+      // If the post ID doesn't exist, return an error response
+      return res.status(404).json({
+        success: false,
+        message: "Interaction not found",
+      });
+    }
+
+    // Save the updated user document
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Interaction score decremented successfully",
+      interactions: user.interactions,
+    });
+  } catch (error) {
+    return next(new ErrorHandler(error.message, 400));
+  }
+});
+
+exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
+
+  try {
+    const userId = req.user.id;
+    const { postId } = req.body;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    // Find the interaction by postId
+    const existingInteraction = user.interactions.find(
+      (interaction) => interaction.post_id.toString() === postId
+    );
+
+    // If the post ID already exists in the user's interactions array, update the score
+    if (existingInteraction) {
+      existingInteraction.score + 1;
     } else {
       // If the post ID doesn't exist, add a new interaction object
-      user.interactions.push({ post_id: postId, score: score });
+      user.interactions.push({ post_id: postId, score: 1 });
     }
 
     // Save the updated user document

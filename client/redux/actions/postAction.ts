@@ -81,6 +81,7 @@ export const addLikes =
   ({postId, posts, user}: LikesParams) =>
   async (dispatch: Dispatch<any>) => {
     try {
+      console.log('addLikes function called');
       const token = await AsyncStorage.getItem('token');
 
       const updatedPosts = posts.map((userObj: any) =>
@@ -104,25 +105,6 @@ export const addLikes =
         type: 'getAllPostsSuccess',
         payload: updatedPosts,
       });
-
-      // Update the interactions array by finding the interaction object corresponding to the postId
-      const updatedInteractions = user.interactions.map((interaction: any) =>
-        interaction.post_id === postId
-          ? {...interaction, score: interaction.score + 1}
-          : interaction,
-      );
-
-      // Send the updated user interactions to the backend
-      await axios.put(
-        `${URI}/update-interactions`,
-        {interactions: updatedInteractions},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-      console.log('test');
 
       await axios.put(
         `${URI}/update-likes`,
