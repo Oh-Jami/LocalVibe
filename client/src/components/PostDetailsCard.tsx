@@ -14,6 +14,10 @@ import {
 import axios from 'axios';
 import {URI} from '../../redux/URI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  removeInteraction,
+  updateInteraction,
+} from '../../redux/actions/userAction';
 
 type Props = {
   navigation: any;
@@ -30,13 +34,13 @@ const PostDetailsCard = ({
   postId,
   isRepliesReply,
 }: Props) => {
-  const {user, token,users} = useSelector((state: any) => state.user);
+  const {user, token, users} = useSelector((state: any) => state.user);
   const {posts} = useSelector((state: any) => state.post);
   const dispatch = useDispatch();
   const [active, setActive] = useState(false);
   const [userInfo, setUserInfo] = useState({
     name: '',
-    userName:'',
+    userName: '',
     avatar: {
       url: 'https://res.cloudinary.com/dshp9jnuy/image/upload/v1665822253/avatars/nrxsg8sd9iy10bbsoenn.png',
     },
@@ -66,11 +70,14 @@ const PostDetailsCard = ({
       const isLikedBefore = item.likes.find((i: any) => i.userId === user._id);
       if (isLikedBefore) {
         removeLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+        removeInteraction(e._id, user)(dispatch);
       } else {
         addLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+        updateInteraction(e._id, user)(dispatch);
       }
     } else {
       addLikes({postId: postId ? postId : e._id, posts, user})(dispatch);
+      updateInteraction(e._id, user)(dispatch);
     }
   };
 
@@ -146,13 +153,13 @@ const PostDetailsCard = ({
   };
 
   useEffect(() => {
-    if(users){
+    if (users) {
       const updatedUsers = [...users, user];
-      const userData = updatedUsers.find((user: any) =>
-          user._id === item.user._id
-       );
-       setUserInfo(userData);
-     }
+      const userData = updatedUsers.find(
+        (user: any) => user._id === item.user._id,
+      );
+      setUserInfo(userData);
+    }
   }, [users]);
 
   return (
@@ -212,7 +219,7 @@ const PostDetailsCard = ({
             />
           )}
         </View>
-        
+
         <View className="flex-row items-center left-[50px] top-[5px]">
           <TouchableOpacity
             onPress={() =>
@@ -290,23 +297,20 @@ const PostDetailsCard = ({
             />
           </TouchableOpacity> */}
         </View>
-        {item.likes.length !== 0 &&
+        {item.likes.length !== 0 && (
           <View className="pl-[50px] pt-4 flex-row">
-          
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('PostDetails', {
-                data: item,
-              })
-            }>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.navigate('PostDetails', {
+                  data: item,
+                })
+              }></TouchableOpacity>
+            <Text className="text-[16px[ text-[#0000009b]">
+              {item.likes.length} {item.likes.length > 1 ? 'likes' : 'like'}
+            </Text>
+          </View>
+        )}
 
-            </TouchableOpacity>
-          <Text className="text-[16px[ text-[#0000009b]">
-            {item.likes.length} {item.likes.length > 1 ? 'likes' : 'like'}
-          </Text>
-        </View>  
-        }
-          
         {isRepliesReply && (
           <View className="pl-[50px] pt-4 flex-row">
             <Text className="text-[16px[ text-[#0000009b]">
@@ -326,13 +330,13 @@ const PostDetailsCard = ({
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                onPress={() =>
-                  item.likes.length !== 0 &&
-                  navigation.navigate('PostLikeCard', {
-                    item: item.likes,
-                    navigation: navigation,
-                  })
-                }>
+                  onPress={() =>
+                    item.likes.length !== 0 &&
+                    navigation.navigate('PostLikeCard', {
+                      item: item.likes,
+                      navigation: navigation,
+                    })
+                  }>
                   <Text className="ml-[10px] mt-[20px] text-black text-[16px]">
                     {item.likes.length}{' '}
                     {item.likes.length > 1 ? 'likes' : 'like'}
