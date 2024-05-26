@@ -108,6 +108,18 @@ const postSchema = new mongoose.Schema(
         ],
       },
     ],
+    userInteractions: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        score: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );

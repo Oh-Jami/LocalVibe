@@ -76,6 +76,18 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    similarUsers: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        similarityScore: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
