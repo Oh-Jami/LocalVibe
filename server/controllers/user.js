@@ -265,11 +265,9 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
       );
 
       if (similarUserIndex !== -1) {
-        // If the similar user exists, just increment the similarity score
         user.similarUsers[similarUserIndex].similarityScore += 1;
       } else {
-        // If the similar user doesn't exist, add a new entry
-        user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
+        user.similarUsers.push({ userId, similarityScore: 1 });
       }
     });
 
