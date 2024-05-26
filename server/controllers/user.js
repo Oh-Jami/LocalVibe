@@ -129,17 +129,25 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
+
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
-  console.log("test");
+  console.log("Received data:", req.body);
 
   try {
     const userId = req.user.id;
-    const { postId } = req.body;
+    const { postId, score } = req.body;
 
-    // Find the user by ID
+    // Validate input data
+    if (!userId || !postId || !score) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
+
     const user = await User.findById(userId);
+    const post = await Post.findById(postId);
 
-    // Find the interaction by postId
     const existingInteractionIndex = user.interactions.findIndex(
       (interaction) => interaction.post_id.toString() === postId
     );
@@ -147,51 +155,65 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     if (existingInteractionIndex !== -1) {
       const existingInteraction = user.interactions[existingInteractionIndex];
 
-      // Decrement the score
       if (existingInteraction.score > 0) {
-        existingInteraction.score -= 1;
+        existingInteraction.score -= score;
 
-        // Remove the interaction if the score reaches zero
-        if (existingInteraction.score === 0) {
+        if (existingInteraction.score <= 0) {
           user.interactions.splice(existingInteractionIndex, 1);
         }
       } else {
-        // Handle case where score is already zero or less
         return res.status(400).json({
           success: false,
           message: "Score cannot be less than zero",
         });
       }
     } else {
-      // If the post ID doesn't exist, return an error response
       return res.status(404).json({
         success: false,
         message: "Interaction not found",
       });
     }
 
-    // Save the updated user document
+    const postInteractionIndex = post.userInteractions.findIndex(
+      (interaction) => interaction.userId.toString() === userId
+    );
+
+    if (postInteractionIndex !== -1) {
+      const postInteraction = post.userInteractions[postInteractionIndex];
+
+      if (postInteraction.score > 0) {
+        postInteraction.score -= score;
+
+        if (postInteraction.score <= 0) {
+          post.userInteractions.splice(postInteractionIndex, 1);
+        }
+      }
+    }
+
     await user.save();
+    await post.save();
 
     res.status(200).json({
       success: true,
-      message: "Interaction updated successfully",
+      message: "Interaction removed successfully",
       interactions: user.interactions,
     });
   } catch (error) {
+    console.error("Error removing interactions:", error);
     return next(new ErrorHandler(error.message, 400));
   }
 });
 
 exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
-  console.log("test");
-
   try {
+    console.log("Received data from client:", req.body); // Logging the request body received from the client
+
     const userId = req.user.id;
-    const { postId } = req.body;
+    const { postId, score } = req.body;
 
     // Find the user by ID
     const user = await User.findById(userId);
+    const post = await Post.findById(postId);
 
     // Find the interaction by postId
     const existingInteraction = user.interactions.find(
@@ -206,8 +228,19 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
       user.interactions.push({ post_id: postId, score: 1 });
     }
 
+    let postInteraction = post.userInteractions.find(
+      (interaction) => interaction.userId.toString() === userId
+    );
+
+    if (postInteraction) {
+      postInteraction.score += 1;
+    } else {
+      post.userInteractions.push({ userId, score: 1 });
+    }
+
     // Save the updated user document
     await user.save();
+    await post.save();
 
     res.status(200).json({
       success: true,
