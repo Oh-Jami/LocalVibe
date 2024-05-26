@@ -266,6 +266,8 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
 
       if (similarUserIndex !== -1) {
         user.similarUsers[similarUserIndex].similarityScore += 1;
+      } else {
+        user.similarUsers.push({ userId, similarityScore: 1 });
       }
     });
 
