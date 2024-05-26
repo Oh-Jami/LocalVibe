@@ -131,23 +131,40 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
 });
 
 // Update user interactions
-exports.updateInteractions = async (req, res, next) => {
-  try {
-    const { interactions } = req.body;
+exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
+  console.log("test");
 
-    // Find the user by ID and update the interactions array
-    const user = await User.findByIdAndUpdate(
-      req.user.id, // Assuming you're using authentication middleware to populate req.user
-      { interactions },
-      { new: true }
+  try {
+    const userId = req.user.id;
+    const { postId, score } = req.body;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+
+    // Check if the user's interactions array already contains the given post ID
+    const existingInteraction = user.interactions.find(
+      (interaction) => interaction.post_id.toString() === postId
     );
 
-    res.status(200).json({ success: true, user });
+    // If the post ID already exists in the user's interactions array, update the score
+    if (existingInteraction) {
+      existingInteraction.score += score;
+    } else {
+      // If the post ID doesn't exist, add a new interaction object
+      user.interactions.push({ post_id: postId, score: score });
+    }
+
+    // Save the updated user document
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Interactions updated successfully",
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Internal server error" });
+    return next(new ErrorHandler(error.message, 400));
   }
-};
+});
 
 // Follow and unfollow user
 exports.followUnfollowUser = catchAsyncErrors(async (req, res, next) => {

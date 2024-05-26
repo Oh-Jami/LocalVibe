@@ -40,6 +40,8 @@ router.route("/update-coor").put(isAuthenticatedUser, updateUserCoor);
 
 router.route("/me").get(isAuthenticatedUser, userDetails);
 
-router.put("/update-interactions", isAuthenticatedUser, updateInteractions);
+router
+  .route("/update-interactions")
+  .put(isAuthenticatedUser, updateInteractions);
 
 module.exports = router;
