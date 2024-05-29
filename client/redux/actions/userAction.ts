@@ -11,13 +11,13 @@ export const updateInteraction =
       const token = await AsyncStorage.getItem('token');
       console.log('Sending data to server:', {
         postId,
-        score: user.interactions.length > 0 ? user.interactions[0].score : 0,
+        score: 1,
       });
       const response = await axios.put(
         `${URI}/update-interactions`,
         {
           postId,
-          score: user.interactions.length > 0 ? user.interactions[0].score : 0,
+          score: 1,
         },
         {
           headers: {

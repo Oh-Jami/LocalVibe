@@ -130,7 +130,6 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
-
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
   console.log("Received data:", req.body);
 
@@ -140,6 +139,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
     // Validate input data
     if (!userId || !postId || !score) {
+      console.error("Missing required fields");
       return res.status(400).json({
         success: false,
         message: "Missing required fields",
@@ -150,6 +150,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     const post = await Post.findById(postId);
 
     if (!user || !post) {
+      console.error("User or Post not found");
       return res.status(404).json({
         success: false,
         message: "User or Post not found",
@@ -165,17 +166,21 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
       if (existingInteraction.score > 0) {
         existingInteraction.score -= score;
+        console.log("Updated interaction score:", existingInteraction.score);
 
         if (existingInteraction.score <= 0) {
           user.interactions.splice(existingInteractionIndex, 1);
+          console.log("Removed interaction:", postId);
         }
       } else {
+        console.error("Score cannot be less than zero");
         return res.status(400).json({
           success: false,
           message: "Score cannot be less than zero",
         });
       }
     } else {
+      console.error("Interaction not found");
       return res.status(404).json({
         success: false,
         message: "Interaction not found",
@@ -191,9 +196,11 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
       if (postInteraction.score > 0) {
         postInteraction.score -= score;
+        console.log("Updated post interaction score:", postInteraction.score);
 
         if (postInteraction.score <= 0) {
           post.userInteractions.splice(postInteractionIndex, 1);
+          console.log("Removed post interaction for user:", userId);
         }
       }
     }
@@ -201,12 +208,15 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     // Save the updated user and post documents first
     await user.save();
     await post.save();
+    console.log("Saved updated user and post documents.");
 
     // Update similarity scores based on remaining interactions
     user.similarUsers = []; // Reset similar users
+    console.log("Reset similar users.");
 
-    user.interactions.forEach(async (interaction) => {
+    for (const interaction of user.interactions) {
       const userPost = await Post.findById(interaction.post_id);
+      console.log("Processing post:", interaction.post_id);
 
       userPost.userInteractions.forEach((userPostInteraction) => {
         const otherUserId = userPostInteraction.userId.toString();
@@ -218,15 +228,18 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
           if (similarUserIndex !== -1) {
             user.similarUsers[similarUserIndex].similarityScore += 1;
+            console.log("Updated similarity score for user:", otherUserId);
           } else {
             user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
+            console.log("Added new similar user:", otherUserId);
           }
         }
       });
-    });
+    }
 
     // Save the updated user document with the updated similarity scores
     await user.save();
+    console.log("Saved user with updated similarity scores.");
 
     res.status(200).json({
       success: true,
@@ -246,11 +259,16 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     const userId = req.user.id;
     const { postId, score } = req.body;
 
+    console.log("User ID:", userId);
+    console.log("Post ID:", postId);
+    console.log("Score:", score);
+
     // Find the user and post by their IDs
     const user = await User.findById(userId);
     const post = await Post.findById(postId);
 
     if (!user || !post) {
+      console.error("User or Post not found");
       return next(new ErrorHandler("User or Post not found", 404));
     }
 
@@ -261,8 +279,13 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
 
     if (existingInteraction) {
       existingInteraction.score += score;
+      console.log(
+        "Updated existing interaction score:",
+        existingInteraction.score
+      );
     } else {
       user.interactions.push({ post_id: postId, score });
+      console.log("Added new interaction with score:", score);
     }
 
     // Find or create the interaction by userId for the post
@@ -272,19 +295,27 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
 
     if (postInteraction) {
       postInteraction.score += score;
+      console.log(
+        "Updated existing post interaction score:",
+        postInteraction.score
+      );
     } else {
       post.userInteractions.push({ userId, score });
+      console.log("Added new post interaction with score:", score);
     }
 
     // Save the updated user and post documents first
     await user.save();
     await post.save();
+    console.log("Saved user and post with updated interactions.");
 
     // Update similarity scores based on user interactions
     user.similarUsers = []; // Reset similar users
+    console.log("Reset similar users.");
 
-    user.interactions.forEach(async (interaction) => {
+    for (const interaction of user.interactions) {
       const userPost = await Post.findById(interaction.post_id);
+      console.log("Processing post:", interaction.post_id);
 
       userPost.userInteractions.forEach((userPostInteraction) => {
         const otherUserId = userPostInteraction.userId.toString();
@@ -296,21 +327,25 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
 
           if (similarUserIndex !== -1) {
             user.similarUsers[similarUserIndex].similarityScore += 1;
+            console.log("Updated similarity score for user:", otherUserId);
           } else {
             user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
+            console.log("Added new similar user:", otherUserId);
           }
         }
       });
-    });
+    }
 
     // Save the updated user document with the updated similarity scores
     await user.save();
+    console.log("Saved user with updated similarity scores.");
 
     res.status(200).json({
       success: true,
       message: "Interactions and similarity scores updated successfully",
     });
   } catch (error) {
+    console.error("Error updating interactions:", error);
     return next(new ErrorHandler(error.message, 400));
   }
 });
