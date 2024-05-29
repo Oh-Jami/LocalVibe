@@ -49,16 +49,11 @@ export const removeInteraction =
     try {
       console.log('removeInteraction');
 
-      // Find the interaction corresponding to the postId
-      const interaction = user.interactions.find(
-        (interaction: any) => interaction.post_id === postId,
-      );
-
       // Send the updated user interactions to the backend
       const token = await AsyncStorage.getItem('token');
       const response = await axios.put(
         `${URI}/remove-interactions`,
-        {postId, score: interaction.score},
+        {postId, score: 1},
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -130,6 +130,7 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
+
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
   console.log("Received data:", req.body);
 
@@ -163,7 +164,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
       const existingInteraction = user.interactions[existingInteractionIndex];
 
       if (existingInteraction.score > 0) {
-        existingInteraction.score -= score;
+        existingInteraction.score -= 1;
         console.log("Updated interaction score:", existingInteraction.score);
 
         if (existingInteraction.score <= 0) {
@@ -191,7 +192,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
       const postInteraction = post.userInteractions[postInteractionIndex];
 
       if (postInteraction.score > 0) {
-        postInteraction.score -= score;
+        postInteraction.score -= 1;
         console.log("Updated post interaction score:", postInteraction.score);
 
         if (postInteraction.score <= 0) {
@@ -278,7 +279,7 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     );
 
     if (existingInteraction) {
-      existingInteraction.score += score;
+      existingInteraction.score += 1;
       console.log(
         "Updated existing interaction score:",
         existingInteraction.score
@@ -294,7 +295,7 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     );
 
     if (postInteraction) {
-      postInteraction.score += score;
+      postInteraction.score += 1;
       console.log(
         "Updated existing post interaction score:",
         postInteraction.score
