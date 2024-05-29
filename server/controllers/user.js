@@ -149,21 +149,12 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     const user = await User.findById(userId);
     const post = await Post.findById(postId);
 
-    // // Update similarity scores before removing the interaction
-    // user.interactions.forEach((interaction) => {
-    //   const otherUserId = post.userInteractions.find(
-    //     (inter) => inter.userId.toString() !== userId.toString()
-    //   );
-
-    //   const similarUserIndex = user.similarUsers.findIndex(
-    //     (similarUser) =>
-    //       similarUser.userId.toString() === otherUserId.toString()
-    //   );
-
-    //   if (similarUserIndex !== -1) {
-    //     user.similarUsers[similarUserIndex].similarityScore -= score;
-    //   }
-    // });
+    if (!user || !post) {
+      return res.status(404).json({
+        success: false,
+        message: "User or Post not found",
+      });
+    }
 
     const existingInteractionIndex = user.interactions.findIndex(
       (interaction) => interaction.post_id.toString() === postId
@@ -207,8 +198,37 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
       }
     }
 
+    // Save the updated user and post documents first
     await user.save();
     await post.save();
+
+    // Update similarity scores based on remaining interactions
+    const userInteractions = await Post.find({
+      "userInteractions.userId": userId,
+    });
+
+    user.similarUsers = []; // Reset similar users
+
+    userInteractions.forEach((userPost) => {
+      userPost.userInteractions.forEach((interaction) => {
+        const otherUserId = interaction.userId.toString();
+
+        if (otherUserId !== userId.toString()) {
+          const similarUserIndex = user.similarUsers.findIndex(
+            (similarUser) => similarUser.userId.toString() === otherUserId
+          );
+
+          if (similarUserIndex !== -1) {
+            user.similarUsers[similarUserIndex].similarityScore += 1;
+          } else {
+            user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
+          }
+        }
+      });
+    });
+
+    // Save the updated user document with the updated similarity scores
+    await user.save();
 
     res.status(200).json({
       success: true,
@@ -228,56 +248,76 @@ exports.updateInteractions = catchAsyncErrors(async (req, res, next) => {
     const userId = req.user.id;
     const { postId, score } = req.body;
 
-    // Find the user by ID
+    // Find the user and post by their IDs
     const user = await User.findById(userId);
     const post = await Post.findById(postId);
 
-    // Find the interaction by postId
-    const existingInteraction = user.interactions.find(
+    if (!user || !post) {
+      return next(new ErrorHandler("User or Post not found", 404));
+    }
+
+    // Update or create the interaction by postId for the user
+    let existingInteraction = user.interactions.find(
       (interaction) => interaction.post_id.toString() === postId
     );
 
-    // If the post ID already exists in the user's interactions array, update the score
     if (existingInteraction) {
-      existingInteraction.score += 1;
+      existingInteraction.score += score; // Assuming score from req.body
     } else {
-      // If the post ID doesn't exist, add a new interaction object
-      user.interactions.push({ post_id: postId, score: 1 });
+      user.interactions.push({ post_id: postId, score });
     }
 
+    // Update or create the interaction by userId for the post
     let postInteraction = post.userInteractions.find(
       (interaction) => interaction.userId.toString() === userId
     );
 
     if (postInteraction) {
-      postInteraction.score += 1;
+      postInteraction.score += score; // Assuming score from req.body
     } else {
-      post.userInteractions.push({ userId, score: 1 });
+      post.userInteractions.push({ userId, score });
     }
 
-    // // Update similarity scores after recording the interaction
-    // post.userInteractions.forEach((interaction) => {
-    //   const otherUserId = interaction.userId.toString() !== userId.toString();
-    //   console.log("userinteraction", otherUserId);
-    //   const similarUserIndex = user.similarUsers.findIndex(
-    //     (similarUser) =>
-    //       similarUser.userId.toString() === otherUserId.toString()
-    //   );
-
-    //   if (similarUserIndex !== -1) {
-    //     user.similarUsers[similarUserIndex].similarityScore += 1;
-    //   } else {
-    //     user.similarUsers.push({ userId, similarityScore: 1 });
-    //   }
-    // });
-
-    // Save the updated user document
+    // Save the updated user and post documents first
     await user.save();
     await post.save();
 
+    // Find all posts the current user has interacted with
+    const userInteractions = await Post.find({
+      "userInteractions.userId": userId,
+    });
+
+    // Update similarity scores based on interactions with these posts
+    userInteractions.forEach((userPost) => {
+      userPost.userInteractions.forEach((interaction) => {
+        const otherUserId = interaction.userId.toString();
+        console.log("found interacted posts");
+
+        // Ensure we are not comparing the user with themselves
+        if (otherUserId !== userId.toString()) {
+          const similarUserIndex = user.similarUsers.findIndex(
+            (similarUser) => similarUser.userId.toString() === otherUserId
+          );
+
+          if (similarUserIndex !== -1) {
+            // If found, increment the similarity score
+            user.similarUsers[similarUserIndex].similarityScore += 1;
+            console.log("Updated user score");
+          } else {
+            // If not found, add a new entry with an initial similarity score
+            user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
+            console.log("Added new user to similarity");
+          }
+        }
+      });
+    });
+
+    // Save the updated user document
+    await user.save();
+
     res.status(200).json({
       success: true,
-      message: "Interactions updated successfully",
+      message: "Interactions and similarity scores updated successfully",
     });
   } catch (error) {
     return next(new ErrorHandler(error.message, 400));
