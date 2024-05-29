@@ -130,7 +130,6 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
-
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
   console.log("Received data:", req.body);
 
