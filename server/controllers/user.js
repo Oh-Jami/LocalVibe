@@ -130,6 +130,7 @@ exports.getAllUsers = catchAsyncErrors(async (req, res, next) => {
     users,
   });
 });
+
 exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
   console.log("Received data:", req.body);
 
@@ -139,7 +140,6 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
 
     // Validate input data
     if (!userId || !postId || !score) {
-      console.error("Missing required fields");
       return res.status(400).json({
         success: false,
         message: "Missing required fields",
@@ -150,7 +150,6 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     const post = await Post.findById(postId);
 
     if (!user || !post) {
-      console.error("User or Post not found");
       return res.status(404).json({
         success: false,
         message: "User or Post not found",
@@ -173,14 +172,12 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
           console.log("Removed interaction:", postId);
         }
       } else {
-        console.error("Score cannot be less than zero");
         return res.status(400).json({
           success: false,
           message: "Score cannot be less than zero",
         });
       }
     } else {
-      console.error("Interaction not found");
       return res.status(404).json({
         success: false,
         message: "Interaction not found",
@@ -211,8 +208,7 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
     console.log("Saved updated user and post documents.");
 
     // Update similarity scores based on remaining interactions
-    user.similarUsers = []; // Reset similar users
-    console.log("Reset similar users.");
+    const similarityMap = new Map(); // Use a map to track similarity scores
 
     for (const interaction of user.interactions) {
       const userPost = await Post.findById(interaction.post_id);
@@ -222,20 +218,25 @@ exports.removeInteractions = catchAsyncErrors(async (req, res, next) => {
         const otherUserId = userPostInteraction.userId.toString();
 
         if (otherUserId !== userId.toString()) {
-          const similarUserIndex = user.similarUsers.findIndex(
-            (similarUser) => similarUser.userId.toString() === otherUserId
-          );
-
-          if (similarUserIndex !== -1) {
-            user.similarUsers[similarUserIndex].similarityScore += 1;
-            console.log("Updated similarity score for user:", otherUserId);
-          } else {
-            user.similarUsers.push({ userId: otherUserId, similarityScore: 1 });
-            console.log("Added new similar user:", otherUserId);
+          if (!similarityMap.has(otherUserId)) {
+            similarityMap.set(otherUserId, 0);
           }
+          similarityMap.set(otherUserId, similarityMap.get(otherUserId) + 1);
+          console.log(
+            `Updated similarity score for user ${otherUserId}: ${similarityMap.get(
+              otherUserId
+            )}`
+          );
         }
       });
     }
+
+    // Convert the map to an array and filter out users with zero similarity scores
+    user.similarUsers = Array.from(similarityMap.entries())
+      .filter(([_, similarityScore]) => similarityScore > 0)
+      .map(([userId, similarityScore]) => ({ userId, similarityScore }));
+
+    console.log("Updated similar users list:", user.similarUsers);
 
     // Save the updated user document with the updated similarity scores
     await user.save();
