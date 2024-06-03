@@ -32,7 +32,7 @@ type Props = {
 };
 
 const HomeScreen = ({navigation}: Props) => {
-  const {user, token} = useSelector((state: any) => state.user);
+  const {user, token, users} = useSelector((state: any) => state.user);
   const {posts, isLoading} = useSelector((state: any) => state.post);
   const dispatch = useDispatch();
   const [offsetY, setOffsetY] = useState(0);
@@ -178,11 +178,44 @@ const HomeScreen = ({navigation}: Props) => {
     };
   }
 
+  interface User {
+    id: number;
+    interactions: Array<{
+      post_id: number;
+      score: number;
+    }>;
+    similarUsers: Array<{
+      userId: string;
+      similarityScore: number;
+    }>;
+  }
+
   const filterAndFormatPosts = () => {
     const formattedPosts: Post[] = [];
     const premiumBusinessPosts: Post[] = [];
     const regularBusinessPosts: Post[] = [];
     const personalPosts: Post[] = [];
+    const similarUsersInteractions: number[] = [];
+
+    // Extract similar user IDs
+    const similarUserIds = user.similarUsers.map(
+      (similarUser: {userId: any}) => similarUser.userId,
+    );
+
+    console.log('Similar User IDs:', similarUserIds);
+
+    similarUserIds.forEach((similarUserId: any) => {
+      const similarUser = users.find((user: {id: any}) => user.id);
+
+      if (similarUser) {
+        const interactions = similarUserId.interactions.map(
+          (interactions: {post_id: any}) => interactions.post_id,
+        );
+        similarUsersInteractions.push(interactions.post_id);
+      }
+    });
+
+    console.log('Similar Users Interactions:', similarUsersInteractions);
 
     for (const post of posts) {
       const distance = haversine(
@@ -207,6 +240,7 @@ const HomeScreen = ({navigation}: Props) => {
     let regularIndex = 0;
     let personalIndex = 0;
     let premiumCounter = 0;
+    let regularCounter = 0;
 
     while (
       premiumIndex < premiumBusinessPosts.length ||
@@ -216,12 +250,20 @@ const HomeScreen = ({navigation}: Props) => {
       if (premiumCounter < 2 && premiumIndex < premiumBusinessPosts.length) {
         formattedPosts.push(premiumBusinessPosts[premiumIndex++]);
         premiumCounter++;
-      } else if (regularIndex < regularBusinessPosts.length) {
+      } else if (
+        regularCounter < 3 &&
+        regularIndex < regularBusinessPosts.length
+      ) {
         formattedPosts.push(regularBusinessPosts[regularIndex++]);
+      } else if (
+        regularCounter < 3 &&
+        regularIndex < regularBusinessPosts.length
+      ) {
         premiumCounter = 0;
+        regularCounter = 0;
       }
 
-      for (let i = 0; i < 3 && personalIndex < personalPosts.length; i++) {
+      for (let i = 0; i < 4 && personalIndex < personalPosts.length; i++) {
         formattedPosts.push(personalPosts[personalIndex++]);
       }
     }
