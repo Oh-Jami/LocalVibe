@@ -364,11 +364,6 @@ exports.followUnfollowUser = catchAsyncErrors(async (req, res, next) => {
 
     if (isFollowedBefore) {
       await User.updateOne(
-        { _id: followUserId },
-        { $pull: { followers: { userId: loggedInUserId } } }
-      );
-
-      await User.updateOne(
         { _id: loggedInUserId },
         { $pull: { following: { userId: followUserId } } }
       );
@@ -386,23 +381,29 @@ exports.followUnfollowUser = catchAsyncErrors(async (req, res, next) => {
     } else {
       await User.updateOne(
         { _id: followUserId },
+
         { $push: { followers: { userId: loggedInUserId } } }
       );
 
       await User.updateOne(
         { _id: loggedInUserId },
+
         { $push: { following: { userId: followUserId } } }
       );
 
       await Notification.create({
         creator: req.user,
+
         type: "Follow",
+
         title: "Followed you",
+
         userId: followUserId,
       });
 
       res.status(200).json({
         success: true,
+
         message: "User followed successfully",
       });
     }
